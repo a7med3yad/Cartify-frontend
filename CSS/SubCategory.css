@@ -1,0 +1,171 @@
+/* Import Unified Color Palette */
+@import url('colors.css');
+/* Import Unified Header Styles */
+@import url('header.css');
+/* Import Unified Button Styles */
+@import url('buttons.css');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  scroll-behavior: smooth;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bgGradient);
+  color: #333;
+}
+
+h1, h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between; /* توزيع العناصر */
+  align-items: center;
+  height: 80px;
+  background: var(--greenLight);
+  padding: 0 35px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  gap: 20px;
+}
+
+/* Logo is already styled in header.css */
+.PageIcon img {
+  /* height: 50px; - unified in header.css */
+}
+
+/* Search Bar */
+.middle {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+#searchBar {
+  width: 65%;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: none;
+  transition: 0.3s;
+}
+
+#searchBar:hover {
+  box-shadow: 0 0 8px var(--greenNormal);
+}
+
+#searchBar:focus {
+  box-shadow: 0 0 15px var(--greenDark);
+  outline: none;
+}
+
+/* Navigation */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+}
+
+nav .left,
+nav .right {
+  display: flex;
+  gap: 20px;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--greenNormal);
+  font-weight: bold;
+  font-size: 16px;
+}
+
+nav a:hover {
+  border-bottom: 3px solid var(--greenNormal);
+}
+
+/* Category Section */
+.category-section {
+  max-width: 1620px;
+  margin: 0 auto 40px auto;
+  overflow-x: auto;
+  padding-bottom: 20px;
+}
+
+.category {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.category-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 20px;
+  width: 200px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.category-card img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.category-name {
+  font-size: 21px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Offers Section */
+.offers {
+  max-width: 1620px;
+  padding-top: 20px;
+}
+
+.offer-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.offer-card {
+  width: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.offer-card:hover {
+  transform: scale(1.02);
+}
+
+.offer-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* General Links */
+a {
+  text-decoration: none;
+}
