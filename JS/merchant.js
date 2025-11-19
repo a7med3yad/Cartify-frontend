@@ -1472,9 +1472,16 @@ const MerchantApp = (() => {
       return;
     }
     
-    // Use GET with pagination parameters according to Swagger API
-    // Correct endpoint: /api/merchant/promotions (without store ID)
-    const url = `${API_BASE_URL}/merchant/promotions?page=${page}&pageSize=${pageSize}`;
+    // Try with store ID first, then fallback to general endpoint
+    const storeId = getStoreId();
+    let url;
+    if (storeId) {
+      // Try merchant promotions with store ID
+      url = `${API_BASE_URL}/merchant/promotions/store/${storeId}?page=${page}&pageSize=${pageSize}`;
+    } else {
+      // Fallback to general merchant promotions endpoint
+      url = `${API_BASE_URL}/merchant/promotions?page=${page}&pageSize=${pageSize}`;
+    }
     
     console.log('Fetching promotions from:', url);
     
@@ -1503,10 +1510,35 @@ const MerchantApp = (() => {
         console.error('Response:', xhr.responseJSON || xhr.responseText);
         console.error('Request URL:', url);
         
-        // If 404, show clear error message
-        if (xhr.status === 404) {
-          let errorMsg = 'Promotion endpoint not found. Please verify the endpoint in Swagger documentation at https://cartify.runasp.net/swagger/index.html';
-          $("#promotionTableBody").html(`<tr><td colspan="7" class="text-center text-danger">${errorMsg}</td></tr>`);
+        // If 404 and we tried with store ID, try without store ID
+        if (xhr.status === 404 && storeId && url.includes('/store/')) {
+          console.log('Promotion endpoint with store ID not found, trying general endpoint...');
+          const fallbackUrl = `${API_BASE_URL}/merchant/promotions?page=${page}&pageSize=${pageSize}`;
+          $.ajax({
+            url: fallbackUrl,
+            method: 'GET',
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            success: function(response) {
+              console.log('Promotions API Response (fallback):', response);
+              const promotions = response.data || response.items || response || [];
+              const totalCount = response.totalCount || response.total || promotions.length;
+              const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
+              renderPromotionsTable(promotions);
+              updatePromotionPaginationInfo(page, totalPages, totalCount);
+            },
+            error: function(fallbackXhr) {
+              console.error('Fallback endpoint also failed:', fallbackXhr);
+              let errorMsg = 'Promotion endpoint not found. Please verify the endpoint in Swagger documentation at https://cartify.runasp.net/swagger/index.html';
+              if (fallbackXhr.responseJSON && fallbackXhr.responseJSON.message) {
+                errorMsg = fallbackXhr.responseJSON.message;
+              }
+              $("#promotionTableBody").html(`<tr><td colspan="7" class="text-center text-danger">${errorMsg}</td></tr>`);
+            }
+          });
           return;
         }
         
