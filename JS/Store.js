@@ -15,10 +15,13 @@ $(document).ready(function () {
             return;
         }
 
+        // API Base URL
+        const API_BASE_URL = 'https://cartify.runasp.net/api';
+        
         $.ajax({
             type: "post",
-            url: "https://a7med3yad.github.io//api/Users/CreateMerchantProfile",
-            data: JSON.stringify(storeName),
+            url: `${API_BASE_URL}/Users/CreateMerchantProfile`,
+            data: JSON.stringify({ StoreName: storeName }),
             headers: { "Authorization": "Bearer " + (oldAuth ? JSON.parse(oldAuth).jwt : "") },
             contentType: "application/json",
             success: function (response) {

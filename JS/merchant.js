@@ -2081,7 +2081,7 @@ const MerchantApp = (() => {
         <tr>
           <td>${categoryId}</td>
           <td>${category.categoryName || category.name || category.CategoryName || 'N/A'}</td>
-          <td>${category.description || category.Description || 'N/A'}</td>
+          <td>${category.categoryDescription || category.CategoryDescription || category.description || category.Description || 'N/A'}</td>
           <td>${category.imageUrl || category.image || category.ImageUrl ? `<img src="${category.imageUrl || category.image || category.ImageUrl}" width="50" height="50" class="img-thumbnail">` : 'N/A'}</td>
           <td><span id="productCount-${categoryId}">Loading...</span></td>
           <td><span class="badge ${category.isActive !== false ? 'bg-success' : 'bg-secondary'}">${category.isActive !== false ? 'Active' : 'Inactive'}</span></td>
@@ -2248,7 +2248,7 @@ const MerchantApp = (() => {
                 <div class="col-md-6">
                   <strong>Category ID:</strong> ${categoryId || 'N/A'}<br>
                   <strong>Name:</strong> ${category.categoryName || category.name || 'N/A'}<br>
-                  <strong>Description:</strong> ${category.description || 'N/A'}<br>
+                  <strong>Description:</strong> ${category.categoryDescription || category.CategoryDescription || category.description || category.Description || 'N/A'}<br>
                 </div>
                 <div class="col-md-6">
                   <strong>Products Count:</strong> ${productCount}<br>
@@ -2531,7 +2531,7 @@ const MerchantApp = (() => {
         }
         
         $('#categoryName').val(data.categoryName || data.name || data.CategoryName || '');
-        $('#categoryDescription').val(data.description || data.categoryDescription || data.CategoryDescription || '');
+        $('#categoryDescription').val(data.categoryDescription || data.CategoryDescription || data.description || data.Description || '');
         $('#categoryIsActive').prop('checked', data.isActive !== false && data.isActive !== undefined);
         
         // If there's an existing image, show it

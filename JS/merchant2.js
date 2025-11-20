@@ -2199,7 +2199,7 @@ const MerchantApp = (() => {
         <tr>
           <td>${categoryId || 'N/A'}</td>
           <td>${category.categoryName || category.name || 'N/A'}</td>
-          <td>${category.description || 'N/A'}</td>
+          <td>${category.categoryDescription || category.CategoryDescription || category.description || category.Description || 'N/A'}</td>
           <td>${category.imageUrl ? `<img src="${category.imageUrl}" width="50" height="50" class="img-thumbnail">` : 'N/A'}</td>
           <td><span id="productCount-${categoryId}">Loading...</span></td>
           <td><span class="badge ${category.isActive !== false ? 'bg-success' : 'bg-secondary'}">${category.isActive !== false ? 'Active' : 'Inactive'}</span></td>
@@ -2338,7 +2338,7 @@ const MerchantApp = (() => {
                 <div class="col-md-6">
                   <strong>Category ID:</strong> ${categoryId || 'N/A'}<br>
                   <strong>Name:</strong> ${category.categoryName || category.name || 'N/A'}<br>
-                  <strong>Description:</strong> ${category.description || 'N/A'}<br>
+                  <strong>Description:</strong> ${category.categoryDescription || category.CategoryDescription || category.description || category.Description || 'N/A'}<br>
                 </div>
                 <div class="col-md-6">
                   <strong>Products Count:</strong> ${productCount}<br>
@@ -2514,7 +2514,7 @@ const MerchantApp = (() => {
       success: function(data) {
         $('#categoryId').val(data.categoryId || data.id || data.CategoryId);
         $('#categoryName').val(data.categoryName || data.name);
-        $('#categoryDescription').val(data.description || data.categoryDescription);
+        $('#categoryDescription').val(data.categoryDescription || data.CategoryDescription || data.description || data.Description || '');
         $('#categoryIsActive').prop('checked', data.isActive !== false);
       },
       error: function(xhr) {
