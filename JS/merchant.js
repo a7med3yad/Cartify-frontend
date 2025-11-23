@@ -546,7 +546,13 @@ const MerchantApp = (() => {
       }
       
       // Parse the JSON string
-      const authData = JSON.parse(authString);
+      let authData;
+      try {
+        authData = JSON.parse(authString);
+      } catch (parseError) {
+        console.error('getAuthToken: Failed to parse auth data JSON:', parseError);
+        return '';
+      }
       
       // Extract and validate the JWT token
       const token = authData?.jwt || authData?.token || '';
@@ -1218,13 +1224,25 @@ const MerchantApp = (() => {
     }
     
     // Extract roles from the JWT payload
-    const rawRoles = payload[ROLE_CLAIM_PATH] || [];
+    // Try multiple possible claim paths in case the backend uses a different format
+    let rawRoles = payload[ROLE_CLAIM_PATH];
+    
+    // Fallback: try alternative claim paths
+    if (!rawRoles) {
+      rawRoles = payload['role'] || payload['Role'] || payload['roles'] || payload['Roles'] || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    }
+    
+    // If still no roles found, log the payload structure for debugging
+    if (!rawRoles) {
+      console.warn('getCurrentUserRoles: No roles found in token payload. Available keys:', Object.keys(payload));
+      return [];
+    }
     
     // Handle both array and single string role formats
     const roles = Array.isArray(rawRoles) ? rawRoles : (rawRoles ? [rawRoles] : []);
     
     // Filter out any null/undefined/empty values and return
-    const validRoles = roles.filter(Boolean);
+    const validRoles = roles.filter(Boolean).map(role => String(role).trim()).filter(role => role.length > 0);
     console.log('getCurrentUserRoles: Extracted roles:', validRoles);
     
     return validRoles;
@@ -1238,26 +1256,72 @@ const MerchantApp = (() => {
     localStorage.setItem(ROLE_MODE_STORAGE_KEY, mode);
   }
 
+  // Flags to prevent multiple redirects and concurrent retries
+  let isRedirecting = false;
+  let isCheckingToken = false;
+  let tokenCheckAttempts = 0;
+  
   function ensureMerchantAccess() {
     // Prevent redirect loops - if we're already on login page, don't redirect again
-    if (window.location.pathname.includes('login.html')) {
+    if (window.location.pathname.toLowerCase().includes('login.html')) {
       console.log('ensureMerchantAccess: Already on login page, skipping check');
       return false;
     }
 
-    const token = getAuthToken();
-    console.log('ensureMerchantAccess: Token retrieved:', token ? 'Token exists' : 'No token');
-    
-    if (!token || token.trim() === '') {
-      console.warn('ensureMerchantAccess: No valid token found, redirecting to login');
-      // Small delay to prevent race conditions with other scripts
-      setTimeout(() => {
-        if (!getAuthToken()) {
-          window.location.href = "login.html";
-        }
-      }, 100);
+    // Prevent multiple simultaneous redirect attempts
+    if (isRedirecting) {
+      console.log('ensureMerchantAccess: Redirect already in progress, skipping check');
       return false;
     }
+
+    // Prevent concurrent token checks
+    if (isCheckingToken) {
+      console.log('ensureMerchantAccess: Token check already in progress, skipping');
+      return false;
+    }
+
+    // Get token (with retry logic handled asynchronously)
+    const token = getAuthToken();
+    const maxAttempts = 5;
+    
+    console.log('ensureMerchantAccess: Token check attempt', tokenCheckAttempts + 1, '- Token:', token ? 'exists' : 'not found');
+    
+    if (!token || token.trim() === '') {
+      tokenCheckAttempts++;
+      
+      if (tokenCheckAttempts < maxAttempts) {
+        // Token not available yet, retry after a short delay (handles race conditions after login redirect)
+        console.log(`ensureMerchantAccess: Token not found, retry ${tokenCheckAttempts}/${maxAttempts} in 200ms...`);
+        isCheckingToken = true;
+        setTimeout(() => {
+          isCheckingToken = false;
+          ensureMerchantAccess();
+        }, 200);
+        return false;
+      } else {
+        // Max attempts reached, redirect to login
+        console.warn('ensureMerchantAccess: No valid token found after', maxAttempts, 'attempts, redirecting to login');
+        isRedirecting = true;
+        tokenCheckAttempts = 0; // Reset for next time
+        setTimeout(() => {
+          // Double-check one more time before redirecting
+          const finalToken = getAuthToken();
+          if (!finalToken) {
+            window.location.href = "login.html";
+          } else {
+            isRedirecting = false;
+            // Token found, retry the check
+            ensureMerchantAccess();
+          }
+        }, 300);
+        return false;
+      }
+    }
+    
+    // Reset attempt counter and checking flag on success
+    tokenCheckAttempts = 0;
+    isCheckingToken = false;
+    console.log('ensureMerchantAccess: ✅ Token found');
     
     const roles = getCurrentUserRoles();
     console.log('ensureMerchantAccess: User roles extracted:', roles);
@@ -1267,17 +1331,20 @@ const MerchantApp = (() => {
     // Also handle variations like "Merchant", "merchant", "MERCHANT"
     const hasMerchantRole = roles.some(role => {
       if (!role) return false;
-      const roleStr = role.toString().trim();
-      return roleStr.toLowerCase() === MERCHANT_ROLE_NAME.toLowerCase() ||
-             roleStr === MERCHANT_ROLE_NAME;
+      const roleStr = String(role).trim();
+      const normalizedRole = roleStr.toLowerCase();
+      const normalizedMerchant = MERCHANT_ROLE_NAME.toLowerCase();
+      return normalizedRole === normalizedMerchant || roleStr === MERCHANT_ROLE_NAME;
     });
     
     console.log('ensureMerchantAccess: Has Merchant role?', hasMerchantRole);
+    console.log('ensureMerchantAccess: Full role comparison - roles:', roles, 'looking for:', MERCHANT_ROLE_NAME);
     
     if (!hasMerchantRole) {
       console.warn('ensureMerchantAccess: User does not have Merchant role. Roles found:', roles);
       console.warn('ensureMerchantAccess: Redirecting to index.html');
       setRoleMode(ROLE_MODES.CUSTOMER);
+      isRedirecting = true;
       // Small delay to prevent race conditions
       setTimeout(() => {
         window.location.href = "index.html";
@@ -1285,6 +1352,8 @@ const MerchantApp = (() => {
       return false;
     }
     
+    // Reset redirect flag on success
+    isRedirecting = false;
     console.log('ensureMerchantAccess: ✅ Merchant access granted successfully');
     return true;
   }
@@ -5596,19 +5665,46 @@ const MerchantApp = (() => {
 
 // Initialize immediately when script loads to prevent other scripts from redirecting
 (function() {
+  // Function to initialize with retry logic for token availability
+  function initializeWithRetry(attempt = 0, maxAttempts = 3) {
+    if (MerchantApp?.init) {
+      // Check if we're on the merchant home page
+      const isMerchantPage = window.location.pathname.toLowerCase().includes('merchhome.html');
+      
+      if (isMerchantPage) {
+        // On merchant page, check if token is available
+        // Try to get token directly from storage (since getAuthToken is not exposed)
+        let token = '';
+        try {
+          const authString = localStorage.getItem('Auth') || sessionStorage.getItem('Auth');
+          if (authString) {
+            const authData = JSON.parse(authString);
+            token = authData?.jwt || authData?.token || '';
+          }
+        } catch (e) {
+          console.warn('MerchantApp: Error checking token:', e);
+        }
+        
+        if (!token && attempt < maxAttempts) {
+          // Token not available yet, retry after a short delay
+          console.log(`MerchantApp: Token not available, retry ${attempt + 1}/${maxAttempts}...`);
+          setTimeout(() => initializeWithRetry(attempt + 1, maxAttempts), 300);
+          return;
+        }
+      }
+      
+      console.log('MerchantApp: Initializing...');
+      MerchantApp.init();
+    }
+  }
+  
   // Run initialization as soon as possible
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      if (MerchantApp?.init) {
-        console.log('MerchantApp: Initializing on DOMContentLoaded');
-        MerchantApp.init();
-      }
+      initializeWithRetry();
     });
   } else {
     // DOM is already loaded, initialize immediately
-    if (MerchantApp?.init) {
-      console.log('MerchantApp: Initializing immediately (DOM already loaded)');
-      MerchantApp.init();
-    }
+    initializeWithRetry();
   }
 })();
