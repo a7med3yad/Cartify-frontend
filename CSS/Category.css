@@ -15,57 +15,36 @@ body {
   font-family: 'Poppins', sans-serif;
   background: var(--bgGradient);
   color: var(--textDark);
-  padding-top: 100px; /* Space for fixed header */
+  padding-top: 100px;
 }
 
+/* ================================= */
+/* Page Titles - Modern Styling      */
+/* ================================= */
 h1, h2 {
   text-align: center;
   margin-bottom: 30px;
+  font-family: 'Poppins', sans-serif;
 }
 
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between; /* توزيع العناصر */
-  align-items: center;
-  height: 80px;
-  background: var(--greenLight);
-  padding: 0 35px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  gap: 20px;
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--textDark);
+  margin-top: 40px;
+  margin-bottom: 10px;
 }
 
-/* Logo is already styled in header.css */
-.PageIcon img {
-  /* height: 50px; - unified in header.css */
+h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--textSecondary);
+  margin-bottom: 50px;
 }
 
-/* Search Bar */
-.middle {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-#searchBar {
-  width: 65%;
-  padding: 8px 12px;
-  border-radius: 5px;
-  border: none;
-  transition: 0.3s;
-}
-
-#searchBar:hover {
-  box-shadow: 0 0 8px var(--greenNormal);
-}
-
-#searchBar:focus {
-  box-shadow: 0 0 15px var(--greenDark);
-  outline: none;
-}
-
-
-/* Category Section */
+/* ================================= */
+/* Category Section - Modern Grid    */
+/* ================================= */
 .category-section {
   max-width: 1620px;
   margin: 0 auto 60px auto;
@@ -75,46 +54,46 @@ h1, h2 {
 }
 
 .category {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 30px;
   padding: 20px 0;
+  justify-items: center;
 }
 
-/* Simple Animation Keyframes */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
+/* ================================= */
+/* Category Card - Modern Design     */
+/* ================================= */
 .category-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   padding: 30px 20px;
-  width: 220px;
-  min-width: 220px;
+  width: 100%;
+  max-width: 280px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   border: 2px solid transparent;
   animation: fadeIn 0.5s ease;
 }
 
-/* Ripple Effect - Moved to after shop-now-badge */
-
-/* Simple hover effect */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .category-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 35px rgba(34, 197, 94, 0.2);
   border-color: var(--greenNormal);
 }
 
@@ -144,13 +123,16 @@ h1, h2 {
   cursor: pointer;
 }
 
+/* ================================= */
+/* Image Wrapper - Modern            */
+/* ================================= */
 .category-card .image-wrapper {
   position: relative;
   width: 140px;
   height: 140px;
   margin: 0 auto 20px;
   background: linear-gradient(135deg, var(--greenLight), var(--greenLightHover));
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,6 +160,9 @@ h1, h2 {
   transform: scale(1.1);
 }
 
+/* ================================= */
+/* Category Name - Modern            */
+/* ================================= */
 .category-name {
   font-size: 18px;
   font-weight: 600;
@@ -187,14 +172,16 @@ h1, h2 {
   position: relative;
   z-index: 1;
   line-height: 1.4;
+  font-family: 'Poppins', sans-serif;
 }
 
 .category-card:hover .category-name {
   color: var(--greenDark);
 }
 
-
-/* Shop Now Badge */
+/* ================================= */
+/* Shop Now Badge - Modern           */
+/* ================================= */
 .category-card .shop-now-badge {
   position: absolute;
   top: 12px;
@@ -202,7 +189,7 @@ h1, h2 {
   background: linear-gradient(135deg, var(--greenNormal), var(--greenDark));
   color: white;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -212,13 +199,16 @@ h1, h2 {
   z-index: 3;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
   pointer-events: none;
+  font-family: 'Poppins', sans-serif;
 }
 
 .category-card:hover .shop-now-badge {
   opacity: 1;
 }
 
-/* Offers Section */
+/* ================================= */
+/* Offers Section - Modern Grid      */
+/* ================================= */
 .offers {
   max-width: 1620px;
   margin: 0 auto;
@@ -226,20 +216,23 @@ h1, h2 {
 }
 
 .offer-row {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 30px;
   padding: 20px;
-  flex-wrap: wrap;
+  justify-items: center;
 }
 
+/* ================================= */
+/* Offer Card - Modern Design        */
+/* ================================= */
 .offer-card {
-  width: 380px;
-  max-width: 100%;
-  border-radius: 18px;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   animation: fadeIn 0.5s ease;
   border: 2px solid transparent;
@@ -247,7 +240,7 @@ h1, h2 {
 
 .offer-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 35px rgba(34, 197, 94, 0.2);
   border-color: var(--greenNormal);
 }
 
@@ -267,7 +260,108 @@ h1, h2 {
   transform: scale(1.05);
 }
 
-/* General Links */
+/* ================================= */
+/* General Links                     */
+/* ================================= */
 a {
   text-decoration: none;
+}
+
+/* ================================= */
+/* Responsive Design                 */
+/* ================================= */
+@media (max-width: 1200px) {
+  .category {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 25px;
+  }
+
+  .offer-row {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-top: 120px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-top: 20px;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 30px;
+  }
+
+  .category-section {
+    padding: 20px 15px;
+  }
+
+  .category {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+  }
+
+  .category-card {
+    padding: 20px 15px;
+    max-width: 100%;
+  }
+
+  .category-card .image-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+
+  .category-card img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .offer-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 10px;
+  }
+
+  .offer-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  .category {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+  }
+
+  .category-card {
+    padding: 15px 10px;
+  }
+
+  .category-card .image-wrapper {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 15px;
+  }
+
+  .category-card img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .category-name {
+    font-size: 16px;
+  }
 }

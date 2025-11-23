@@ -1,16 +1,18 @@
 /* ================================= */
-/* Unified Header Styles             */
+/* Unified Header Styles - ALL PAGES */
 /* ================================= */
 /* Import Unified Color Palette */
 @import url('colors.css');
 
 /* ================================= */
-/* Standard Header (for most pages)  */
+/* Standard Header (Unified)         */
 /* ================================= */
-header.header {
+header.header,
+.navbar.bg-body-tertiary {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,20 +21,16 @@ header.header {
   padding: 0 35px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  z-index: 100;
+  z-index: 1000;
   gap: 20px;
 }
 
-/* Fixed header variant (for compatibility) */
-header.header.fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-/* Logo and Navigation Container */
+/* ================================= */
+/* Logo Section (Unified)            */
+/* ================================= */
 header.header .PageIcon,
-.navbar .navbar-logo {
+.navbar .navbar-logo,
+.navbar .navbar-brand {
   display: flex;
   align-items: center;
   gap: 25px;
@@ -59,32 +57,18 @@ header.header .PageIcon a,
   text-decoration: none;
 }
 
-header.header .PageIcon nav ul {
-  display: flex;
-  gap: 25px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  align-items: center;
+/* Logo hover effects */
+header.header .PageIcon a:hover img,
+.navbar .navbar-brand:hover img {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
-header.header .PageIcon nav ul li a {
-  text-decoration: none;
-  color: var(--greenNormal);
-  font-weight: bold;
-  font-size: 16px;
-  font-family: 'Poppins', sans-serif;
-  padding: 5px 0;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-}
-
-header.header .PageIcon nav ul li a:hover {
-  border-bottom: 3px solid var(--greenNormal);
-}
-
-/* Search Bar (Middle Section) */
-header.header .middle {
+/* ================================= */
+/* Search Bar (Middle Section)       */
+/* ================================= */
+header.header .middle,
+.navbar .navbar-center {
   flex: 1;
   display: flex;
   justify-content: center;
@@ -92,7 +76,9 @@ header.header .middle {
   min-width: 0;
 }
 
-header.header .middle .search-form {
+header.header .middle .search-form,
+header.header .middle form,
+.navbar .navbar-center form {
   display: flex;
   gap: 10px;
   width: 100%;
@@ -118,7 +104,8 @@ header.header .middle .search-form input,
 }
 
 header.header .middle .search-form .btn,
-header.header .middle .search-form .btn.gradient-btn {
+header.header .middle .search-form .btn.gradient-btn,
+.navbar .navbar-center .btn.gradient-btn {
   flex-shrink: 0;
   padding: 12px 24px;
   border-radius: 25px;
@@ -126,25 +113,6 @@ header.header .middle .search-form .btn.gradient-btn {
   font-size: 14px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, var(--greenNormal), var(--greenDark));
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
-  display: inline-block;
-}
-
-header.header .middle .search-form .btn:hover,
-header.header .middle .search-form .btn.gradient-btn:hover {
-  filter: brightness(115%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
-}
-
-header.header .middle .search-form .btn:active,
-header.header .middle .search-form .btn.gradient-btn:active {
-  transform: translateY(0) scale(0.98);
 }
 
 header.header .middle #searchBar:hover,
@@ -171,13 +139,16 @@ header.header .middle input[type="search"]::placeholder,
 header.header .middle input[type="text"]::placeholder,
 header.header .middle .search-form input::placeholder,
 .navbar .form-control::placeholder {
-  color: var(--textLight);
+  color: var(--textSecondary);
   font-size: 15px;
 }
 
-/* Right Side Actions */
+/* ================================= */
+/* Right Side Actions               */
+/* ================================= */
 header.header .Login,
-header.header .right-actions {
+header.header .right-actions,
+.navbar .navbar-right {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -186,7 +157,9 @@ header.header .right-actions {
   margin-left: 5px;
 }
 
-/* Cart and Wishlist Buttons in Header - Professional with Animations */
+/* ================================= */
+/* Cart and Wishlist Buttons        */
+/* ================================= */
 header.header .cart-btn,
 header.header .wishlist-btn {
   display: inline-flex;
@@ -195,18 +168,18 @@ header.header .wishlist-btn {
   gap: 10px;
   padding: 12px 24px;
   background: linear-gradient(135deg, var(--greenNormal), var(--greenDark));
-  border-radius: 30px;
+  border-radius: 10px;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 15px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: auto;
   min-height: 48px;
   border: none;
   color: white;
   font-family: 'Poppins', sans-serif;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
   position: relative;
   overflow: hidden;
 }
@@ -219,8 +192,8 @@ header.header .wishlist-btn::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.6s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 header.header .cart-btn:hover::before,
@@ -230,34 +203,36 @@ header.header .wishlist-btn:hover::before {
 
 header.header .cart-btn {
   background: linear-gradient(135deg, var(--greenNormal), var(--greenDark));
-  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
 }
 
 header.header .cart-btn:hover {
   background: linear-gradient(135deg, var(--greenDark), var(--greenNormal));
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+  color: white;
 }
 
 header.header .cart-btn:active {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
 }
 
 header.header .wishlist-btn {
   background: linear-gradient(135deg, var(--redNormal), var(--redDark));
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
 }
 
 header.header .wishlist-btn:hover {
   background: linear-gradient(135deg, var(--redDark), var(--redNormal));
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.35);
+  color: white;
 }
 
 header.header .wishlist-btn:active {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.35);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
 }
 
 header.header .cart-btn img,
@@ -268,14 +243,14 @@ header.header .wishlist-btn img {
   flex-shrink: 0;
   object-fit: contain;
   filter: brightness(0) invert(1);
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.3s ease;
   position: relative;
   z-index: 1;
 }
 
 header.header .cart-btn:hover img,
 header.header .wishlist-btn:hover img {
-  transform: scale(1.2) rotate(10deg);
+  transform: scale(1.1);
 }
 
 header.header .cart-btn span,
@@ -285,23 +260,12 @@ header.header .wishlist-btn span {
   z-index: 1;
 }
 
-/* Pulse animation for cart button */
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-  }
-  50% {
-    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.5);
-  }
-}
-
-header.header .cart-btn:not(:hover) {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-/* Login/Register Links in Header - Unified Style */
+/* ================================= */
+/* Login/Register Links              */
+/* ================================= */
 header.header .LOGIN,
-header.header .nav-link {
+header.header .nav-link,
+.navbar .nav-link {
   text-decoration: none;
   color: var(--greenNormal);
   font-weight: 600;
@@ -313,19 +277,22 @@ header.header .nav-link {
 }
 
 header.header .LOGIN:hover,
-header.header .nav-link:hover {
+header.header .nav-link:hover,
+.navbar .nav-link:hover {
   border-bottom: 3px solid var(--greenNormal);
   color: var(--greenDark);
 }
 
-/* Start for free / Register Button - Unified with gradient-btn */
+/* ================================= */
+/* Start for free / Register Button */
+/* ================================= */
 header.header .startforfree,
 header.header .gradient-btn,
 .navbar .gradient-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: linear-gradient(135deg, var(--greenNormal), var(--greenDark));
   color: white;
-  border-radius: 25px;
+  border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
@@ -334,6 +301,7 @@ header.header .gradient-btn,
   cursor: pointer;
   display: inline-block;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+  font-family: 'Poppins', sans-serif;
 }
 
 header.header .startforfree:hover,
@@ -342,6 +310,7 @@ header.header .gradient-btn:hover,
   filter: brightness(115%);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+  color: white;
 }
 
 header.header .startforfree:active,
@@ -351,24 +320,128 @@ header.header .gradient-btn:active,
 }
 
 /* ================================= */
-/* Bootstrap Navbar (for index.html) */
+/* Menu Toggle Button                */
+/* ================================= */
+.menu-toggle-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle-btn:hover {
+  background: var(--greenLight);
+  border-color: var(--greenNormal);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
+.menu-toggle-btn .hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 24px;
+}
+
+.menu-toggle-btn .hamburger span {
+  width: 100%;
+  height: 3px;
+  background: var(--greenNormal);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle-btn:hover .hamburger span {
+  background: var(--greenDark);
+}
+
+/* ================================= */
+/* User Avatar / Dropdown            */
+/* ================================= */
+header.header .btn-img,
+.navbar .btn-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid rgba(34, 197, 94, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+header.header .btn-img:hover,
+.navbar .btn-img:hover {
+  transform: scale(1.05);
+  border-color: var(--greenNormal);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+/* Dropdown Menu */
+header.header .dropdown-menu,
+.navbar .dropdown-menu {
+  border: none;
+  border-radius: 12px;
+  padding: 0.5rem 0;
+  margin-top: 15px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 240px;
+  background: white;
+}
+
+header.header .dropdown-item,
+.navbar .dropdown-item {
+  padding: 0.875rem 1.5rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: var(--textDark);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+header.header .dropdown-item:not(.disabled):hover,
+.navbar .dropdown-item:not(.disabled):hover {
+  background-color: var(--greenLight);
+  color: var(--greenDark);
+  padding-left: 2rem;
+}
+
+header.header .dropdown-item .icon,
+.navbar .dropdown-item .icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--greenNormal);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* ================================= */
+/* Bootstrap Navbar Specific         */
 /* ================================= */
 .navbar.bg-body-tertiary {
   background-color: var(--greenLight) !important;
-  padding: 10px 20px;
+  padding: 0 35px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Logo hover effects - unified */
-header.header .PageIcon a:hover img,
-.navbar .navbar-brand:hover img {
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 .navbar .navbar-nav .nav-link {
   color: var(--greenNormal);
-  font-weight: bold;
+  font-weight: 600;
   font-size: 16px;
   font-family: 'Poppins', sans-serif;
   padding: 5px 0;
@@ -378,66 +451,48 @@ header.header .PageIcon a:hover img,
 
 .navbar .navbar-nav .nav-link:hover {
   border-bottom: 3px solid var(--greenNormal);
+  color: var(--greenDark);
 }
 
-/* Bootstrap Navbar Search Bar (for index.html) - Unified with other pages */
-.navbar .form-control {
+.navbar .container-fluid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  max-width: 400px;
-  padding: 12px 20px;
-  border-radius: 25px;
-  border: 2px solid transparent;
-  background: white;
-  font-size: 15px;
-  font-family: 'Poppins', sans-serif;
-  transition: all 0.3s ease;
-  outline: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.navbar .form-control:hover {
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
-  border-color: var(--greenLightActive);
-}
-
-.navbar .form-control:focus {
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1), 0 4px 16px rgba(34, 197, 94, 0.2);
-  border-color: var(--greenNormal);
-  transform: translateY(-1px);
-}
-
-.navbar .form-control::placeholder {
-  color: var(--textLight);
-  font-size: 15px;
+  gap: 20px;
 }
 
 /* ================================= */
 /* Responsive Design                 */
 /* ================================= */
 @media (max-width: 768px) {
-  header.header {
+  header.header,
+  .navbar.bg-body-tertiary {
     flex-direction: column;
     height: auto;
     padding: 15px;
     gap: 15px;
+    min-height: 80px;
   }
 
-  header.header .middle {
+  header.header .middle,
+  .navbar .navbar-center {
     width: 100%;
     padding: 0;
   }
 
-  header.header .PageIcon nav ul {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-  }
-
   header.header .Login,
-  header.header .right-actions {
+  header.header .right-actions,
+  .navbar .navbar-right {
     flex-wrap: wrap;
     justify-content: center;
     width: 100%;
   }
-}
 
+  header.header .cart-btn,
+  header.header .wishlist-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
