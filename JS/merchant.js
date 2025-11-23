@@ -4526,16 +4526,21 @@ const MerchantApp = (() => {
     $(document).off('click', '#btnRefreshMeasures').on('click', '#btnRefreshMeasures', fetchMeasures);
     $(document).off('click', '#btnRefreshMeasuresByAttribute').on('click', '#btnRefreshMeasuresByAttribute', function() {
       const attributeName = $('#attributeSelectForMeasure').val();
-      if (attributeName) {
+      console.log('btnRefreshMeasuresByAttribute clicked, selected attribute:', attributeName);
+      if (attributeName && attributeName.trim() !== '') {
         fetchMeasuresByAttribute(attributeName);
+      } else {
+        console.warn('btnRefreshMeasuresByAttribute: No attribute selected');
+        $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-warning">Please select an attribute first</td></tr>');
       }
     });
     $(document).off('change', '#attributeSelectForMeasure').on('change', '#attributeSelectForMeasure', function() {
       const attributeName = $(this).val();
-      if (attributeName) {
+      console.log('attributeSelectForMeasure changed, selected attribute:', attributeName);
+      if (attributeName && attributeName.trim() !== '') {
         fetchMeasuresByAttribute(attributeName);
       } else {
-        $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center">Select an attribute to view measures</td></tr>');
+        $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-muted">Select an attribute to view measures</td></tr>');
       }
     });
     $(document).off('input', '#attributeSearch').on('input', '#attributeSearch', function() {
@@ -4605,29 +4610,83 @@ const MerchantApp = (() => {
   }
 
   function fetchMeasuresByAttribute(attributeName) {
+    // Validate input
+    if (!attributeName || attributeName.trim() === '') {
+      console.error('fetchMeasuresByAttribute: attributeName is empty or invalid');
+      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-warning">Please select an attribute</td></tr>');
+      return;
+    }
+
     const token = getAuthToken();
     if (!token) {
+      console.error('fetchMeasuresByAttribute: No authentication token found');
       $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Authentication required</td></tr>');
       return;
     }
 
+    // Construct URL
+    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName.trim())}/measures`;
+    console.log('fetchMeasuresByAttribute: Calling API:', url);
+    console.log('fetchMeasuresByAttribute: Attribute name:', attributeName);
+
+    // Show loading state
+    $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Loading measures...</td></tr>');
+
     $.ajax({
-      url: `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName)}/measures`,
+      url: url,
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       success: function(response) {
-        const measures = Array.isArray(response) ? response : [];
-        renderMeasuresByAttributeTable(measures);
-      },
-      error: function(xhr) {
-        console.error('Error fetching measures by attribute:', xhr);
-        let errorMsg = 'Error loading measures';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMsg = xhr.responseJSON.message;
+        console.log('fetchMeasuresByAttribute: Success response:', response);
+        
+        // Handle response - could be array or object with data property
+        let measures = [];
+        if (Array.isArray(response)) {
+          measures = response;
+        } else if (response && Array.isArray(response.data)) {
+          measures = response.data;
+        } else if (response && response.data) {
+          measures = [response.data];
         }
+        
+        console.log('fetchMeasuresByAttribute: Parsed measures:', measures);
+        renderMeasuresByAttributeTable(measures, attributeName);
+      },
+      error: function(xhr, status, error) {
+        console.error('fetchMeasuresByAttribute: AJAX Error Details:');
+        console.error('  - Status:', xhr.status);
+        console.error('  - Status Text:', xhr.statusText);
+        console.error('  - Error:', error);
+        console.error('  - Response Text:', xhr.responseText);
+        console.error('  - Response JSON:', xhr.responseJSON);
+        console.error('  - Full XHR object:', xhr);
+        
+        let errorMsg = 'Error loading measures';
+        
+        if (xhr.status === 0) {
+          errorMsg = 'Network error. Please check your connection and CORS settings.';
+        } else if (xhr.status === 401) {
+          errorMsg = 'Authentication failed. Please login again.';
+        } else if (xhr.status === 404) {
+          errorMsg = `Attribute "${attributeName}" not found.`;
+        } else if (xhr.status === 400) {
+          errorMsg = 'Invalid request. Please check the attribute name.';
+        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        } else if (xhr.responseText) {
+          try {
+            const errorObj = JSON.parse(xhr.responseText);
+            errorMsg = errorObj.message || errorObj.error || errorMsg;
+          } catch (e) {
+            errorMsg = `Server error (${xhr.status}): ${xhr.statusText}`;
+          }
+        } else {
+          errorMsg = `Error (${xhr.status}): ${xhr.statusText || error}`;
+        }
+        
         $("#measuresByAttributeTableBody").html(`<tr><td colspan="3" class="text-center text-danger">${errorMsg}</td></tr>`);
       }
     });
@@ -4635,7 +4694,12 @@ const MerchantApp = (() => {
 
   function loadAttributesForSelect() {
     const token = getAuthToken();
-    if (!token) return;
+    if (!token) {
+      console.error('loadAttributesForSelect: No authentication token found');
+      return;
+    }
+
+    console.log('loadAttributesForSelect: Loading attributes for dropdown');
 
     $.ajax({
       url: `${API_BASE_URL}/merchant/attributes-measures/attributes`,
@@ -4645,15 +4709,43 @@ const MerchantApp = (() => {
         'Content-Type': 'application/json'
       },
       success: function(response) {
-        const attributes = Array.isArray(response) ? response : [];
+        console.log('loadAttributesForSelect: Success response:', response);
+        
+        // Handle response - could be array or object with data property
+        let attributes = [];
+        if (Array.isArray(response)) {
+          attributes = response;
+        } else if (response && Array.isArray(response.data)) {
+          attributes = response.data;
+        }
+        
+        console.log('loadAttributesForSelect: Parsed attributes:', attributes);
+        
         const $select = $('#attributeSelectForMeasure');
+        if ($select.length === 0) {
+          console.error('loadAttributesForSelect: Select element #attributeSelectForMeasure not found');
+          return;
+        }
+        
+        // Clear existing options except the first one
         $select.find('option:not(:first)').remove();
+        
+        // Add attributes to dropdown
         attributes.forEach(attr => {
-          $select.append(`<option value="${attr}">${attr}</option>`);
+          const attrName = typeof attr === 'string' ? attr : (attr.name || attr.Name || attr);
+          const escapedAttr = String(attrName).replace(/"/g, '&quot;');
+          $select.append(`<option value="${escapedAttr}">${attrName}</option>`);
         });
+        
+        console.log('loadAttributesForSelect: Loaded', attributes.length, 'attributes into dropdown');
       },
-      error: function(xhr) {
-        console.error('Error loading attributes for select:', xhr);
+      error: function(xhr, status, error) {
+        console.error('loadAttributesForSelect: Error loading attributes:');
+        console.error('  - Status:', xhr.status);
+        console.error('  - Status Text:', xhr.statusText);
+        console.error('  - Error:', error);
+        console.error('  - Response Text:', xhr.responseText);
+        console.error('  - Response JSON:', xhr.responseJSON);
       }
     });
   }
@@ -4722,24 +4814,36 @@ const MerchantApp = (() => {
     });
   }
 
-  function renderMeasuresByAttributeTable(measures) {
+  function renderMeasuresByAttributeTable(measures, attributeName) {
     const $tbody = $('#measuresByAttributeTableBody');
+    
+    console.log('renderMeasuresByAttributeTable: Rendering measures:', measures);
+    console.log('renderMeasuresByAttributeTable: Attribute name:', attributeName);
+    
     if (!measures || measures.length === 0) {
-      $tbody.html('<tr><td colspan="3" class="text-center text-muted">No measures found for this attribute</td></tr>');
+      const message = attributeName 
+        ? `No measures found for attribute "${attributeName}". Measures will appear here once they are used in products with this attribute.`
+        : 'No measures found for this attribute';
+      $tbody.html(`<tr><td colspan="3" class="text-center text-muted">${message}</td></tr>`);
       return;
     }
 
     let html = '';
     measures.forEach((measure, index) => {
+      // Handle if measure is an object with a Name property, or just a string
+      const measureName = typeof measure === 'string' ? measure : (measure.name || measure.Name || measure);
+      const escapedMeasure = String(measureName).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
       html += `
         <tr>
           <td>${index + 1}</td>
-          <td><strong>${measure}</strong></td>
+          <td><strong>${escapedMeasure}</strong></td>
           <td><span class="badge bg-success">Active</span></td>
         </tr>
       `;
     });
     $tbody.html(html);
+    console.log('renderMeasuresByAttributeTable: Rendered', measures.length, 'measures');
   }
 
   function filterAttributes(searchTerm) {
