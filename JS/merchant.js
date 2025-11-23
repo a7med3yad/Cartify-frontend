@@ -528,8 +528,22 @@ const MerchantApp = (() => {
 
   // Get Auth Token
   function getAuthToken() {
-    const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-    return authData.jwt || '';
+    try {
+      // Try localStorage first, then sessionStorage, fallback to empty object
+      const localStorageAuth = localStorage.getItem('Auth');
+      const sessionStorageAuth = sessionStorage.getItem('Auth');
+      const authString = localStorageAuth || sessionStorageAuth || '{}';
+      
+      // Parse the JSON string
+      const authData = JSON.parse(authString);
+      
+      // Return the JWT token if it exists
+      return authData?.jwt || '';
+    } catch (error) {
+      console.error('Error retrieving auth token:', error);
+      // If there's invalid JSON or any error, return empty string
+      return '';
+    }
   }
 
   // ==================== NOTIFICATION SYSTEM ====================
@@ -1162,12 +1176,28 @@ const MerchantApp = (() => {
 
   function getCurrentUserRoles() {
     const token = getAuthToken();
-    if (!token) return [];
+    if (!token) {
+      console.warn('getCurrentUserRoles: No token available');
+      return [];
+    }
+    
     const payload = parseJwt(token);
-    if (!payload) return [];
+    if (!payload) {
+      console.warn('getCurrentUserRoles: Failed to parse token payload');
+      return [];
+    }
+    
+    // Extract roles from the JWT payload
     const rawRoles = payload[ROLE_CLAIM_PATH] || [];
+    
+    // Handle both array and single string role formats
     const roles = Array.isArray(rawRoles) ? rawRoles : (rawRoles ? [rawRoles] : []);
-    return roles.filter(Boolean);
+    
+    // Filter out any null/undefined/empty values and return
+    const validRoles = roles.filter(Boolean);
+    console.log('getCurrentUserRoles: Extracted roles:', validRoles);
+    
+    return validRoles;
   }
 
   function setRoleMode(mode) {
@@ -1181,15 +1211,28 @@ const MerchantApp = (() => {
   function ensureMerchantAccess() {
     const token = getAuthToken();
     if (!token) {
+      console.warn('ensureMerchantAccess: No token found, redirecting to login');
       window.location.href = "login.html";
       return false;
     }
+    
     const roles = getCurrentUserRoles();
-    if (!roles.includes(MERCHANT_ROLE_NAME)) {
+    console.log('ensureMerchantAccess: User roles:', roles);
+    console.log('ensureMerchantAccess: Looking for role:', MERCHANT_ROLE_NAME);
+    
+    // Check if user has Merchant role (case-insensitive check for safety)
+    const hasMerchantRole = roles.some(role => 
+      role && role.toString().toLowerCase() === MERCHANT_ROLE_NAME.toLowerCase()
+    );
+    
+    if (!hasMerchantRole) {
+      console.warn('ensureMerchantAccess: User does not have Merchant role, redirecting to index');
       setRoleMode(ROLE_MODES.CUSTOMER);
       window.location.href = "index.html";
       return false;
     }
+    
+    console.log('ensureMerchantAccess: Merchant access granted');
     return true;
   }
 
