@@ -12,7 +12,8 @@ const MerchantApp = (() => {
     Products: loadProductsList,
     Orders: loadOrders,
     Inventory: loadInventory,
-    Swapper: loadSwapper
+    Swapper: loadSwapper,
+    AttributeMeasure: loadAttributeMeasure
   });
 
   const ATTRIBUTE_DEFINITIONS = {
@@ -4388,9 +4389,687 @@ const MerchantApp = (() => {
     $("#dynamicContentContainer").show().html(html);
   }
 
+  // ==================== ATTRIBUTE & MEASURE SECTION ====================
+  function loadAttributeMeasure() {
+    const html = `
+      <div class="section-container">
+        <h2 class="section-title"><i class="bi bi-tags me-2"></i>Attributes & Measures Management</h2>
+        
+        <!-- Attributes Section -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Attributes</h5>
+              <button class="btn btn-primary btn-sm" id="btnAddAttribute">
+                <i class="bi bi-plus-circle me-2"></i>Add Attribute
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <input type="text" class="form-control" id="attributeSearch" placeholder="Search attributes...">
+              </div>
+              <div class="col-md-6">
+                <button class="btn btn-secondary" id="btnRefreshAttributes">
+                  <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover" id="attributesTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Attribute Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="attributesTableBody">
+                  <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Measures Section -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="bi bi-rulers me-2"></i>Measures</h5>
+              <button class="btn btn-primary btn-sm" id="btnAddMeasure">
+                <i class="bi bi-plus-circle me-2"></i>Add Measure
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <input type="text" class="form-control" id="measureSearch" placeholder="Search measures...">
+              </div>
+              <div class="col-md-6">
+                <button class="btn btn-secondary" id="btnRefreshMeasures">
+                  <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover" id="measuresTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Measure Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="measuresTableBody">
+                  <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Measure by Attribute Section -->
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Measures by Attribute</h5>
+              <button class="btn btn-primary btn-sm" id="btnAddMeasureByAttribute">
+                <i class="bi bi-plus-circle me-2"></i>Add Measure to Attribute
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Select Attribute</label>
+                <select class="form-select" id="attributeSelectForMeasure">
+                  <option value="">Choose an attribute...</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <button class="btn btn-secondary mt-4" id="btnRefreshMeasuresByAttribute">
+                  <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover" id="measuresByAttributeTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Measure Name</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="measuresByAttributeTableBody">
+                  <tr><td colspan="3" class="text-center">Select an attribute to view measures</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $("#dynamicContentContainer").show().html(html);
+    
+    fetchAttributes();
+    fetchMeasures();
+    loadAttributesForSelect();
+    
+    // Bind event handlers
+    $(document).off('click', '#btnAddAttribute').on('click', '#btnAddAttribute', showAddAttributeModal);
+    $(document).off('click', '#btnAddMeasure').on('click', '#btnAddMeasure', showAddMeasureModal);
+    $(document).off('click', '#btnAddMeasureByAttribute').on('click', '#btnAddMeasureByAttribute', showAddMeasureByAttributeModal);
+    $(document).off('click', '#btnRefreshAttributes').on('click', '#btnRefreshAttributes', fetchAttributes);
+    $(document).off('click', '#btnRefreshMeasures').on('click', '#btnRefreshMeasures', fetchMeasures);
+    $(document).off('click', '#btnRefreshMeasuresByAttribute').on('click', '#btnRefreshMeasuresByAttribute', function() {
+      const attributeName = $('#attributeSelectForMeasure').val();
+      if (attributeName) {
+        fetchMeasuresByAttribute(attributeName);
+      }
+    });
+    $(document).off('change', '#attributeSelectForMeasure').on('change', '#attributeSelectForMeasure', function() {
+      const attributeName = $(this).val();
+      if (attributeName) {
+        fetchMeasuresByAttribute(attributeName);
+      } else {
+        $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center">Select an attribute to view measures</td></tr>');
+      }
+    });
+    $(document).off('input', '#attributeSearch').on('input', '#attributeSearch', function() {
+      filterAttributes($(this).val());
+    });
+    $(document).off('input', '#measureSearch').on('input', '#measureSearch', function() {
+      filterMeasures($(this).val());
+    });
+  }
+
+  function fetchAttributes() {
+    const token = getAuthToken();
+    if (!token) {
+      $("#attributesTableBody").html('<tr><td colspan="4" class="text-center text-danger">Authentication required</td></tr>');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const attributes = Array.isArray(response) ? response : [];
+        renderAttributesTable(attributes);
+      },
+      error: function(xhr) {
+        console.error('Error fetching attributes:', xhr);
+        let errorMsg = 'Error loading attributes';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        $("#attributesTableBody").html(`<tr><td colspan="4" class="text-center text-danger">${errorMsg}</td></tr>`);
+      }
+    });
+  }
+
+  function fetchMeasures() {
+    const token = getAuthToken();
+    if (!token) {
+      $("#measuresTableBody").html('<tr><td colspan="4" class="text-center text-danger">Authentication required</td></tr>');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/measures`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const measures = Array.isArray(response) ? response : [];
+        renderMeasuresTable(measures);
+      },
+      error: function(xhr) {
+        console.error('Error fetching measures:', xhr);
+        let errorMsg = 'Error loading measures';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        $("#measuresTableBody").html(`<tr><td colspan="4" class="text-center text-danger">${errorMsg}</td></tr>`);
+      }
+    });
+  }
+
+  function fetchMeasuresByAttribute(attributeName) {
+    const token = getAuthToken();
+    if (!token) {
+      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Authentication required</td></tr>');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName)}/measures`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const measures = Array.isArray(response) ? response : [];
+        renderMeasuresByAttributeTable(measures);
+      },
+      error: function(xhr) {
+        console.error('Error fetching measures by attribute:', xhr);
+        let errorMsg = 'Error loading measures';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        $("#measuresByAttributeTableBody").html(`<tr><td colspan="3" class="text-center text-danger">${errorMsg}</td></tr>`);
+      }
+    });
+  }
+
+  function loadAttributesForSelect() {
+    const token = getAuthToken();
+    if (!token) return;
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const attributes = Array.isArray(response) ? response : [];
+        const $select = $('#attributeSelectForMeasure');
+        $select.find('option:not(:first)').remove();
+        attributes.forEach(attr => {
+          $select.append(`<option value="${attr}">${attr}</option>`);
+        });
+      },
+      error: function(xhr) {
+        console.error('Error loading attributes for select:', xhr);
+      }
+    });
+  }
+
+  function renderAttributesTable(attributes) {
+    const $tbody = $('#attributesTableBody');
+    if (!attributes || attributes.length === 0) {
+      $tbody.html('<tr><td colspan="4" class="text-center text-muted">No attributes found</td></tr>');
+      return;
+    }
+
+    let html = '';
+    attributes.forEach((attr, index) => {
+      const escapedAttr = attr.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `
+        <tr>
+          <td>${index + 1}</td>
+          <td><strong>${attr}</strong></td>
+          <td><span class="badge bg-success">Active</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary check-attribute-btn" data-attribute="${escapedAttr}" title="Check">
+              <i class="bi bi-search"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    $tbody.html(html);
+    
+    // Bind click handlers using event delegation
+    $tbody.off('click', '.check-attribute-btn').on('click', '.check-attribute-btn', function() {
+      const attrName = $(this).data('attribute');
+      checkAttribute(attrName);
+    });
+  }
+
+  function renderMeasuresTable(measures) {
+    const $tbody = $('#measuresTableBody');
+    if (!measures || measures.length === 0) {
+      $tbody.html('<tr><td colspan="4" class="text-center text-muted">No measures found</td></tr>');
+      return;
+    }
+
+    let html = '';
+    measures.forEach((measure, index) => {
+      const escapedMeasure = measure.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `
+        <tr>
+          <td>${index + 1}</td>
+          <td><strong>${measure}</strong></td>
+          <td><span class="badge bg-success">Active</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary check-measure-btn" data-measure="${escapedMeasure}" title="Check">
+              <i class="bi bi-search"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    $tbody.html(html);
+    
+    // Bind click handlers using event delegation
+    $tbody.off('click', '.check-measure-btn').on('click', '.check-measure-btn', function() {
+      const measureName = $(this).data('measure');
+      checkMeasure(measureName);
+    });
+  }
+
+  function renderMeasuresByAttributeTable(measures) {
+    const $tbody = $('#measuresByAttributeTableBody');
+    if (!measures || measures.length === 0) {
+      $tbody.html('<tr><td colspan="3" class="text-center text-muted">No measures found for this attribute</td></tr>');
+      return;
+    }
+
+    let html = '';
+    measures.forEach((measure, index) => {
+      html += `
+        <tr>
+          <td>${index + 1}</td>
+          <td><strong>${measure}</strong></td>
+          <td><span class="badge bg-success">Active</span></td>
+        </tr>
+      `;
+    });
+    $tbody.html(html);
+  }
+
+  function filterAttributes(searchTerm) {
+    const $rows = $('#attributesTableBody tr');
+    if (!searchTerm) {
+      $rows.show();
+      return;
+    }
+    const term = searchTerm.toLowerCase();
+    $rows.each(function() {
+      const text = $(this).text().toLowerCase();
+      $(this).toggle(text.includes(term));
+    });
+  }
+
+  function filterMeasures(searchTerm) {
+    const $rows = $('#measuresTableBody tr');
+    if (!searchTerm) {
+      $rows.show();
+      return;
+    }
+    const term = searchTerm.toLowerCase();
+    $rows.each(function() {
+      const text = $(this).text().toLowerCase();
+      $(this).toggle(text.includes(term));
+    });
+  }
+
+  function showAddAttributeModal() {
+    const modalHtml = `
+      <div class="modal fade" id="addAttributeModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add New Attribute</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="newAttributeName" class="form-label">Attribute Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newAttributeName" placeholder="Enter attribute name" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btnConfirmAddAttribute">Add Attribute</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    $('#addAttributeModal').remove();
+    $('body').append(modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('addAttributeModal'));
+    modal.show();
+    
+    $('#btnConfirmAddAttribute').off('click').on('click', function() {
+      const name = $('#newAttributeName').val().trim();
+      if (!name) {
+        showNotification('Attribute name is required', 'error');
+        return;
+      }
+      addAttribute(name);
+      modal.hide();
+    });
+  }
+
+  function showAddMeasureModal() {
+    const modalHtml = `
+      <div class="modal fade" id="addMeasureModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add New Measure</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="newMeasureName" class="form-label">Measure Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newMeasureName" placeholder="Enter measure name (e.g., kg, cm, liter)" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btnConfirmAddMeasure">Add Measure</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    $('#addMeasureModal').remove();
+    $('body').append(modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('addMeasureModal'));
+    modal.show();
+    
+    $('#btnConfirmAddMeasure').off('click').on('click', function() {
+      const name = $('#newMeasureName').val().trim();
+      if (!name) {
+        showNotification('Measure name is required', 'error');
+        return;
+      }
+      addMeasure(name);
+      modal.hide();
+    });
+  }
+
+  function showAddMeasureByAttributeModal() {
+    const modalHtml = `
+      <div class="modal fade" id="addMeasureByAttributeModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><i class="bi bi-link-45deg me-2"></i>Add Measure to Attribute</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="modalAttributeSelect" class="form-label">Attribute <span class="text-danger">*</span></label>
+                <select class="form-select" id="modalAttributeSelect" required>
+                  <option value="">Choose an attribute...</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="modalMeasureName" class="form-label">Measure Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="modalMeasureName" placeholder="Enter measure name" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btnConfirmAddMeasureByAttribute">Add Measure</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    $('#addMeasureByAttributeModal').remove();
+    $('body').append(modalHtml);
+    
+    // Load attributes into modal select
+    const token = getAuthToken();
+    if (token) {
+      $.ajax({
+        url: `${API_BASE_URL}/merchant/attributes-measures/attributes`,
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        success: function(response) {
+          const attributes = Array.isArray(response) ? response : [];
+          const $select = $('#modalAttributeSelect');
+          attributes.forEach(attr => {
+            $select.append(`<option value="${attr}">${attr}</option>`);
+          });
+        }
+      });
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('addMeasureByAttributeModal'));
+    modal.show();
+    
+    $('#btnConfirmAddMeasureByAttribute').off('click').on('click', function() {
+      const attributeName = $('#modalAttributeSelect').val();
+      const measureName = $('#modalMeasureName').val().trim();
+      if (!attributeName || !measureName) {
+        showNotification('Both attribute and measure name are required', 'error');
+        return;
+      }
+      addMeasureByAttribute(attributeName, measureName);
+      modal.hide();
+    });
+  }
+
+  function addAttribute(name) {
+    const token = getAuthToken();
+    if (!token) {
+      showNotification('Authentication required', 'error');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes`,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({ Name: name }),
+      success: function(response) {
+        showNotification('Attribute added successfully ✅', 'success');
+        fetchAttributes();
+        loadAttributesForSelect();
+      },
+      error: function(xhr) {
+        console.error('Error adding attribute:', xhr);
+        let errorMsg = 'Failed to add attribute';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        showNotification(errorMsg, 'error');
+      }
+    });
+  }
+
+  function addMeasure(name) {
+    const token = getAuthToken();
+    if (!token) {
+      showNotification('Authentication required', 'error');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/measures`,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({ Name: name }),
+      success: function(response) {
+        showNotification('Measure added successfully ✅', 'success');
+        fetchMeasures();
+      },
+      error: function(xhr) {
+        console.error('Error adding measure:', xhr);
+        let errorMsg = 'Failed to add measure';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        showNotification(errorMsg, 'error');
+      }
+    });
+  }
+
+  function addMeasureByAttribute(attributeName, measureName) {
+    const token = getAuthToken();
+    if (!token) {
+      showNotification('Authentication required', 'error');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName)}/measures`,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({ name: measureName }),
+      success: function(response) {
+        showNotification('Measure added to attribute successfully ✅', 'success');
+        fetchMeasuresByAttribute(attributeName);
+        fetchMeasures();
+      },
+      error: function(xhr) {
+        console.error('Error adding measure by attribute:', xhr);
+        let errorMsg = 'Failed to add measure to attribute';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        showNotification(errorMsg, 'error');
+      }
+    });
+  }
+
+  function checkAttribute(name) {
+    const token = getAuthToken();
+    if (!token) {
+      showNotification('Authentication required', 'error');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/attributes/check?name=${encodeURIComponent(name)}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const exists = response.exists;
+        showNotification(`Attribute "${name}" ${exists ? 'exists' : 'does not exist'}`, exists ? 'success' : 'info');
+      },
+      error: function(xhr) {
+        console.error('Error checking attribute:', xhr);
+        showNotification('Error checking attribute', 'error');
+      }
+    });
+  }
+
+  function checkMeasure(name) {
+    const token = getAuthToken();
+    if (!token) {
+      showNotification('Authentication required', 'error');
+      return;
+    }
+
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/attributes-measures/measures/check?name=${encodeURIComponent(name)}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      success: function(response) {
+        const exists = response.exists;
+        showNotification(`Measure "${name}" ${exists ? 'exists' : 'does not exist'}`, exists ? 'success' : 'info');
+      },
+      error: function(xhr) {
+        console.error('Error checking measure:', xhr);
+        showNotification('Error checking measure', 'error');
+      }
+    });
+  }
+
+  // Expose check functions globally for onclick handlers
+  window.checkAttribute = checkAttribute;
+  window.checkMeasure = checkMeasure;
+
   return {
     init: initializeMerchantApp,
     showSection,
+    checkAttribute,
+    checkMeasure
   };
 })();
 
