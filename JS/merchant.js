@@ -4617,23 +4617,50 @@ const MerchantApp = (() => {
     $(document).off('click', '#btnRefreshAttributes').on('click', '#btnRefreshAttributes', fetchAttributes);
     $(document).off('click', '#btnRefreshMeasures').on('click', '#btnRefreshMeasures', fetchMeasures);
     $(document).off('click', '#btnRefreshMeasuresByAttribute').on('click', '#btnRefreshMeasuresByAttribute', function() {
-      const attributeName = $('#attributeSelectForMeasure').val();
-      console.log('btnRefreshMeasuresByAttribute clicked, selected attribute:', attributeName);
-      if (attributeName && attributeName.trim() !== '') {
-        fetchMeasuresByAttribute(attributeName);
-      } else {
+      const $selectedOption = $('#attributeSelectForMeasure option:selected');
+      const attributeName = $selectedOption.data('attribute-name') || $selectedOption.attr('data-attribute-name');
+      console.log('btnRefreshMeasuresByAttribute clicked, selected attribute name:', attributeName);
+      
+      if (!attributeName || attributeName.trim() === '') {
         console.warn('btnRefreshMeasuresByAttribute: No attribute selected');
         $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-warning">Please select an attribute first</td></tr>');
+        return;
       }
+      
+      // Get attribute ID from name
+      getAttributeIdByName(attributeName, function(attributeId) {
+        if (attributeId) {
+          fetchMeasuresByAttribute(attributeId);
+        } else {
+          // If ID not found in cache, we need to fetch it
+          // Since we can't easily get ID from name, we'll need to use a workaround
+          // For now, show an error message
+          console.error('btnRefreshMeasuresByAttribute: Could not get attribute ID for:', attributeName);
+          $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-danger">Error: Could not find attribute ID. Please refresh the page.</td></tr>');
+        }
+      });
     });
+    
     $(document).off('change', '#attributeSelectForMeasure').on('change', '#attributeSelectForMeasure', function() {
-      const attributeName = $(this).val();
-      console.log('attributeSelectForMeasure changed, selected attribute:', attributeName);
-      if (attributeName && attributeName.trim() !== '') {
-        fetchMeasuresByAttribute(attributeName);
-      } else {
+      const $selectedOption = $(this).find('option:selected');
+      const attributeName = $selectedOption.data('attribute-name') || $selectedOption.attr('data-attribute-name');
+      console.log('attributeSelectForMeasure changed, selected attribute name:', attributeName);
+      
+      if (!attributeName || attributeName.trim() === '') {
         $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-muted">Select an attribute to view measures</td></tr>');
+        return;
       }
+      
+      // Get attribute ID from name
+      getAttributeIdByName(attributeName, function(attributeId) {
+        if (attributeId) {
+          fetchMeasuresByAttribute(attributeId);
+        } else {
+          // If ID not found, try to fetch it or show error
+          console.error('attributeSelectForMeasure: Could not get attribute ID for:', attributeName);
+          $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-danger">Error: Could not find attribute ID. Please refresh the page.</td></tr>');
+        }
+      });
     });
     $(document).off('input', '#attributeSearch').on('input', '#attributeSearch', function() {
       filterAttributes($(this).val());
@@ -4659,6 +4686,23 @@ const MerchantApp = (() => {
       },
       success: function(response) {
         const attributes = Array.isArray(response) ? response : [];
+        
+        // Build mapping: if attributes are objects with id and name, use that
+        // Otherwise, we'll need to get IDs another way
+        attributes.forEach((attr, index) => {
+          if (typeof attr === 'object' && attr.id !== undefined) {
+            // Attribute is an object with id and name
+            const attrName = attr.name || attr.Name || '';
+            if (attrName) {
+              attributeNameToIdMap[attrName] = attr.id;
+              console.log(`fetchAttributes: Mapped "${attrName}" to ID ${attr.id}`);
+            }
+          } else if (typeof attr === 'string') {
+            // Attribute is just a name string - we can't get ID from this
+            // The mapping will be built when we can get the ID
+          }
+        });
+        
         renderAttributesTable(attributes);
       },
       error: function(xhr) {
@@ -4701,11 +4745,12 @@ const MerchantApp = (() => {
     });
   }
 
-  function fetchMeasuresByAttribute(attributeName) {
-    // Validate input
-    if (!attributeName || attributeName.trim() === '') {
-      console.error('fetchMeasuresByAttribute: attributeName is empty or invalid');
-      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-warning">Please select an attribute</td></tr>');
+  function fetchMeasuresByAttribute(attributeId) {
+    // Validate input - attributeId must be a positive integer
+    const parsedId = parseInt(attributeId, 10);
+    if (isNaN(parsedId) || parsedId <= 0) {
+      console.error('fetchMeasuresByAttribute: attributeId is invalid:', attributeId);
+      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-warning">Please select a valid attribute</td></tr>');
       return;
     }
 
@@ -4716,10 +4761,10 @@ const MerchantApp = (() => {
       return;
     }
 
-    // Construct URL
-    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName.trim())}/measures`;
+    // Construct URL using attributeId (integer) instead of attributeName
+    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${parsedId}/measures`;
     console.log('fetchMeasuresByAttribute: Calling API:', url);
-    console.log('fetchMeasuresByAttribute: Attribute name:', attributeName);
+    console.log('fetchMeasuresByAttribute: Attribute ID:', parsedId);
 
     // Show loading state
     $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Loading measures...</td></tr>');
@@ -4745,6 +4790,8 @@ const MerchantApp = (() => {
         }
         
         console.log('fetchMeasuresByAttribute: Parsed measures:', measures);
+        // Get attribute name from mapping for display purposes
+        const attributeName = Object.keys(attributeNameToIdMap).find(name => attributeNameToIdMap[name] === parsedId) || `ID ${parsedId}`;
         renderMeasuresByAttributeTable(measures, attributeName);
       },
       error: function(xhr, status, error) {
@@ -4763,9 +4810,9 @@ const MerchantApp = (() => {
         } else if (xhr.status === 401) {
           errorMsg = 'Authentication failed. Please login again.';
         } else if (xhr.status === 404) {
-          errorMsg = `Attribute "${attributeName}" not found.`;
+          errorMsg = `Attribute with ID ${parsedId} not found.`;
         } else if (xhr.status === 400) {
-          errorMsg = 'Invalid request. Please check the attribute name.';
+          errorMsg = 'Invalid request. Please check the attribute ID.';
         } else if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
         } else if (xhr.responseText) {
@@ -4782,6 +4829,34 @@ const MerchantApp = (() => {
         $("#measuresByAttributeTableBody").html(`<tr><td colspan="3" class="text-center text-danger">${errorMsg}</td></tr>`);
       }
     });
+  }
+
+  // Helper function to get attribute ID from attribute name by fetching all attributes with IDs
+  // Since the current API only returns names, we'll need to build a mapping
+  // This function will be called when we need to get an ID for a selected attribute name
+  function getAttributeIdByName(attributeName, callback) {
+    const token = getAuthToken();
+    if (!token) {
+      console.error('getAttributeIdByName: No authentication token found');
+      callback(null);
+      return;
+    }
+    
+    // Check if we already have the ID in our mapping
+    if (attributeNameToIdMap[attributeName]) {
+      console.log(`getAttributeIdByName: Found ID ${attributeNameToIdMap[attributeName]} for attribute "${attributeName}" in cache`);
+      callback(attributeNameToIdMap[attributeName]);
+      return;
+    }
+    
+    // Since we don't have a direct endpoint to get ID by name,
+    // we'll need to fetch all attributes and find the matching one
+    // But the current API only returns names, not IDs
+    
+    // Workaround: We'll need to build the mapping when attributes are loaded
+    // For now, return null and the calling code will handle it
+    console.warn(`getAttributeIdByName: ID not found in cache for attribute "${attributeName}". Mapping needs to be built.`);
+    callback(null);
   }
 
   function loadAttributesForSelect() {
@@ -4822,14 +4897,21 @@ const MerchantApp = (() => {
         // Clear existing options except the first one
         $select.find('option:not(:first)').remove();
         
-        // Add attributes to dropdown
-        attributes.forEach(attr => {
+        // Clear and rebuild the mapping
+        attributeNameToIdMap = {};
+        
+        // Since the API only returns attribute names (strings), not objects with IDs,
+        // we need to store the names and fetch IDs when an attribute is selected.
+        // We'll store the attribute name in a data attribute and fetch the ID on selection.
+        attributes.forEach((attr, index) => {
           const attrName = typeof attr === 'string' ? attr : (attr.name || attr.Name || attr);
-          const escapedAttr = String(attrName).replace(/"/g, '&quot;');
-          $select.append(`<option value="${escapedAttr}">${attrName}</option>`);
+          const escapedAttr = String(attrName).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+          // Store attribute name in data attribute - we'll fetch ID when selected
+          $select.append(`<option value="" data-attribute-name="${escapedAttr}">${attrName}</option>`);
         });
         
         console.log('loadAttributesForSelect: Loaded', attributes.length, 'attributes into dropdown');
+        console.log('loadAttributesForSelect: Note - Attribute IDs will be fetched when an attribute is selected');
       },
       error: function(xhr, status, error) {
         console.error('loadAttributesForSelect: Error loading attributes:');
@@ -5091,7 +5173,10 @@ const MerchantApp = (() => {
           const attributes = Array.isArray(response) ? response : [];
           const $select = $('#modalAttributeSelect');
           attributes.forEach(attr => {
-            $select.append(`<option value="${attr}">${attr}</option>`);
+            const attrName = typeof attr === 'string' ? attr : (attr.name || attr.Name || attr);
+            const escapedAttr = String(attrName).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            // Store attribute name in data attribute
+            $select.append(`<option value="" data-attribute-name="${escapedAttr}">${attrName}</option>`);
           });
         }
       });
@@ -5101,14 +5186,24 @@ const MerchantApp = (() => {
     modal.show();
     
     $('#btnConfirmAddMeasureByAttribute').off('click').on('click', function() {
-      const attributeName = $('#modalAttributeSelect').val();
+      const $selectedOption = $('#modalAttributeSelect option:selected');
+      const attributeName = $selectedOption.data('attribute-name') || $selectedOption.attr('data-attribute-name') || $selectedOption.val();
       const measureName = $('#modalMeasureName').val().trim();
+      
       if (!attributeName || !measureName) {
         showNotification('Both attribute and measure name are required', 'error');
         return;
       }
-      addMeasureByAttribute(attributeName, measureName);
-      modal.hide();
+      
+      // Get attribute ID from name
+      getAttributeIdByName(attributeName, function(attributeId) {
+        if (attributeId) {
+          addMeasureByAttribute(attributeId, measureName);
+          modal.hide();
+        } else {
+          showNotification('Error: Could not find attribute ID. Please refresh the page.', 'error');
+        }
+      });
     });
   }
 
@@ -5129,6 +5224,16 @@ const MerchantApp = (() => {
       data: JSON.stringify({ Name: name }),
       success: function(response) {
         showNotification('Attribute added successfully ✅', 'success');
+        
+        // If response includes attribute ID, store it in the mapping
+        if (response && response.attributeId) {
+          attributeNameToIdMap[name] = response.attributeId;
+          console.log(`addAttribute: Mapped "${name}" to ID ${response.attributeId}`);
+        } else if (response && response.id) {
+          attributeNameToIdMap[name] = response.id;
+          console.log(`addAttribute: Mapped "${name}" to ID ${response.id}`);
+        }
+        
         fetchAttributes();
         loadAttributesForSelect();
       },
@@ -5173,36 +5278,6 @@ const MerchantApp = (() => {
     });
   }
 
-  function addMeasureByAttribute(attributeName, measureName) {
-    const token = getAuthToken();
-    if (!token) {
-      showNotification('Authentication required', 'error');
-      return;
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName)}/measures`,
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      data: JSON.stringify({ name: measureName }),
-      success: function(response) {
-        showNotification('Measure added to attribute successfully ✅', 'success');
-        fetchMeasuresByAttribute(attributeName);
-        fetchMeasures();
-      },
-      error: function(xhr) {
-        console.error('Error adding measure by attribute:', xhr);
-        let errorMsg = 'Failed to add measure to attribute';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMsg = xhr.responseJSON.message;
-        }
-        showNotification(errorMsg, 'error');
-      }
-    });
-  }
 
   function checkAttribute(name) {
     const token = getAuthToken();
