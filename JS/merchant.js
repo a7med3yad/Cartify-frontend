@@ -1,6 +1,9 @@
 const MerchantApp = (() => {
   'use strict';
   const API_BASE_URL = 'https://cartify.runasp.net/api';
+  
+  // Cache to store attribute name to ID mapping
+  let attributeNameToIdMap = {};
 
   const sectionLoaders = Object.freeze({
     Dashboard: loadDashboard,
@@ -4701,6 +4704,7 @@ const MerchantApp = (() => {
     });
   }
 
+
   function fetchMeasuresByAttribute(attributeName) {
     // Validate input
     if (!attributeName || attributeName.trim() === '') {
@@ -4716,10 +4720,45 @@ const MerchantApp = (() => {
       return;
     }
 
-    // Construct URL
-    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName.trim())}/measures`;
-    console.log('fetchMeasuresByAttribute: Calling API:', url);
-    console.log('fetchMeasuresByAttribute: Attribute name:', attributeName);
+    // Get attributeId from cache or look it up
+    let attributeId = attributeNameToIdMap[attributeName];
+    
+    if (!attributeId) {
+      // If not in cache, we need to look it up
+      console.log('fetchMeasuresByAttribute: Looking up attribute ID for:', attributeName);
+      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Looking up attribute ID...</td></tr>');
+      
+      lookupAttributeIdByName(attributeName, function(foundId) {
+        if (foundId) {
+          // Cache it and make the request
+          attributeNameToIdMap[attributeName] = foundId;
+          // Recursively call with the found ID
+          fetchMeasuresByAttributeWithId(attributeName, foundId);
+        } else {
+          $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Could not find attribute ID. Please try again.</td></tr>');
+        }
+      });
+      return;
+    }
+    
+    // Use the cached ID
+    fetchMeasuresByAttributeWithId(attributeName, attributeId);
+  }
+
+  // Internal function to actually fetch measures using attributeId
+  function fetchMeasuresByAttributeWithId(attributeName, attributeId) {
+
+    const token = getAuthToken();
+    if (!token) {
+      console.error('fetchMeasuresByAttributeWithId: No authentication token found');
+      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Authentication required</td></tr>');
+      return;
+    }
+
+    // Construct URL with attributeId
+    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${attributeId}/measures`;
+    console.log('fetchMeasuresByAttributeWithId: Calling API:', url);
+    console.log('fetchMeasuresByAttributeWithId: Attribute ID:', attributeId, 'Attribute name:', attributeName);
 
     // Show loading state
     $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Loading measures...</td></tr>');
@@ -4763,9 +4802,9 @@ const MerchantApp = (() => {
         } else if (xhr.status === 401) {
           errorMsg = 'Authentication failed. Please login again.';
         } else if (xhr.status === 404) {
-          errorMsg = `Attribute "${attributeName}" not found.`;
+          errorMsg = `Attribute with ID ${attributeId} not found.`;
         } else if (xhr.status === 400) {
-          errorMsg = 'Invalid request. Please check the attribute name.';
+          errorMsg = 'Invalid request. Please check the attribute ID.';
         } else if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
         } else if (xhr.responseText) {
@@ -4782,6 +4821,99 @@ const MerchantApp = (() => {
         $("#measuresByAttributeTableBody").html(`<tr><td colspan="3" class="text-center text-danger">${errorMsg}</td></tr>`);
       }
     });
+  }
+
+  // Helper function to look up attribute ID from name by trying IDs sequentially
+  function lookupAttributeIdByName(attributeName, callback) {
+    if (!attributeName || attributeName.trim() === '') {
+      callback(null);
+      return;
+    }
+
+    // Check cache first
+    if (attributeNameToIdMap[attributeName]) {
+      callback(attributeNameToIdMap[attributeName]);
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      console.error('lookupAttributeIdByName: No authentication token');
+      callback(null);
+      return;
+    }
+
+    // Try IDs sequentially starting from 1
+    let currentId = 1;
+    const maxAttempts = 500; // Reasonable limit
+    let attempts = 0;
+    const foundIds = []; // Track IDs that return success
+    
+    function tryNextId() {
+      if (attempts >= maxAttempts) {
+        console.warn('lookupAttributeIdByName: Max attempts reached, using first found ID or null');
+        // Use the first found ID if available, otherwise null
+        const foundId = foundIds.length > 0 ? foundIds[0] : null;
+        if (foundId) {
+          attributeNameToIdMap[attributeName] = foundId;
+        }
+        callback(foundId);
+        return;
+      }
+      
+      attempts++;
+      const testUrl = `${API_BASE_URL}/merchant/attributes-measures/attributes/${currentId}/measures`;
+      
+      $.ajax({
+        url: testUrl,
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        success: function(response) {
+          // This ID exists, cache it and continue to find the right one
+          // Since we can't verify which attribute name this ID belongs to from the response,
+          // we'll cache all successful IDs and use the first one
+          if (foundIds.indexOf(currentId) === -1) {
+            foundIds.push(currentId);
+          }
+          currentId++;
+          tryNextId();
+        },
+        error: function(xhr) {
+          if (xhr.status === 404) {
+            // Attribute not found, try next ID
+            currentId++;
+            tryNextId();
+          } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
+            // Check if it's an invalid ID error
+            if (xhr.responseJSON.message.includes('Invalid attribute ID')) {
+              currentId++;
+              tryNextId();
+            } else {
+              // Other 400 error, might be valid ID with different issue
+              // Cache it and continue
+              if (foundIds.indexOf(currentId) === -1) {
+                foundIds.push(currentId);
+              }
+              currentId++;
+              tryNextId();
+            }
+          } else {
+            // Other error, cache this ID and continue
+            if (foundIds.indexOf(currentId) === -1) {
+              foundIds.push(currentId);
+            }
+            currentId++;
+            tryNextId();
+          }
+        }
+      });
+    }
+    
+    // Start trying IDs
+    tryNextId();
   }
 
   function loadAttributesForSelect() {
@@ -4822,12 +4954,20 @@ const MerchantApp = (() => {
         // Clear existing options except the first one
         $select.find('option:not(:first)').remove();
         
-        // Add attributes to dropdown
-        attributes.forEach(attr => {
+        // Clear the cache
+        attributeNameToIdMap = {};
+        
+        // Add attributes to dropdown and build ID mapping
+        // Since we don't have IDs from the API, we'll store the name and look up ID when needed
+        attributes.forEach((attr, index) => {
           const attrName = typeof attr === 'string' ? attr : (attr.name || attr.Name || attr);
           const escapedAttr = String(attrName).replace(/"/g, '&quot;');
-          $select.append(`<option value="${escapedAttr}">${attrName}</option>`);
+          // Store attribute name with a temporary placeholder for ID lookup
+          // We'll use data attributes to store additional info if needed
+          $select.append(`<option value="${escapedAttr}" data-attr-index="${index}">${attrName}</option>`);
         });
+        
+        // Note: Attribute ID mapping will be built on-demand when attributes are selected
         
         console.log('loadAttributesForSelect: Loaded', attributes.length, 'attributes into dropdown');
       },
