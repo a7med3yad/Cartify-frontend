@@ -132,14 +132,20 @@ $(".FORM").submit(function (e) {
             window.location.href = "login.html"; 
         },
 error: function(xhr) {
-    let msg = xhr.responseText;
+    let msg = xhr.responseText || "";
+    
+    // Handle CORS errors
+    if (xhr.status === 0 || !xhr.responseText) {
+        alert("❌ Network error: Unable to connect to server. Please check your connection or contact support.");
+        return;
+    }
 
-    if (msg.includes("Email")) {
+    if (msg && msg.includes("Email")) {
         $(".step").removeClass("active");
         $("#step1").addClass("active");
         $("#err").text(msg);
         $("#email").focus();
-    } else if (msg.includes("Username")) {
+    } else if (msg && msg.includes("Username")) {
         $(".step").removeClass("active");
         $("#step1").addClass("active");
         $("#err").text(msg);
