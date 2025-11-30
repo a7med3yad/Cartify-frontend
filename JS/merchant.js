@@ -6832,9 +6832,11 @@ const MerchantApp = (() => {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${getAuthToken()}` },
         success: function (product) {
-          $('#productName').val(product.productName || product.name);
-          $('#productDescription').val(product.productDescription || product.description);
-          $('#productType').val(product.typeId || product.type?.id);
+          // CRITICAL FIX: Use scoped selectors to avoid duplicate IDs
+          const $modal = $('#productModal');
+          $modal.find('#productName').val(product.productName || product.name);
+          $modal.find('#productDescription').val(product.productDescription || product.description);
+          $modal.find('#productType').val(product.typeId || product.type?.id);
         },
         error: function (xhr) {
           console.error('Error loading product:', xhr);
@@ -6845,22 +6847,24 @@ const MerchantApp = (() => {
   }
 
   function saveProduct() {
-    const productId = $('#productId').val();
-    const productName = $('#productName').val();
-    const productDescription = $('#productDescription').val();
-    const typeId = $('#productType').val();
+    // CRITICAL FIX: Scope selectors to #productModal to avoid duplicate IDs from old wizard
+    const $modal = $('#productModal');
+    const productId = $modal.find('#productId').val();
+    const productName = $modal.find('#productName').val();
+    const productDescription = $modal.find('#productDescription').val();
+    const typeId = $modal.find('#productType').val();
     const storeId = getStoreId();
 
     // Detailed validation with specific error messages
     if (!productName || productName.trim() === '') {
       showNotification('Product name is required', 'error');
-      $('#productName').focus();
+      $modal.find('#productName').focus();
       return;
     }
 
     if (!typeId || typeId === '') {
       showNotification('Please select a subcategory/type', 'error');
-      $('#productType').focus();
+      $modal.find('#productType').focus();
       return;
     }
 
@@ -6872,7 +6876,7 @@ const MerchantApp = (() => {
     formData.append('TypeId', typeId);
     formData.append('StoreId', storeId);
 
-    const imageFiles = $('#productImages')[0].files;
+    const imageFiles = $modal.find('#productImages')[0].files;
     if (imageFiles.length > 0 && !productId) {
       for (let i = 0; i < imageFiles.length; i++) {
         formData.append('Images', imageFiles[i]);
@@ -6978,7 +6982,8 @@ const MerchantApp = (() => {
       },
       error: function (xhr) {
         console.error('Error fetching subcategories:', xhr);
-        $('#productType').html('<option value="">Error loading subcategories</option>');
+        // CRITICAL FIX: Scope to #productModal to avoid duplicate IDs
+        $('#productModal').find('#productType').html('<option value="">Error loading subcategories</option>');
       }
     });
   }
@@ -6990,7 +6995,8 @@ const MerchantApp = (() => {
       const subName = sub.subCategoryName || sub.name;
       options += `<option value="${subId}">${subName}</option>`;
     });
-    $('#productType').html(options);
+    // CRITICAL FIX: Scope to #productModal to avoid duplicate IDs
+    $('#productModal').find('#productType').html(options);
   }
 
 
