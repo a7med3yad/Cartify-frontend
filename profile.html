@@ -62,39 +62,41 @@
         <!-- Main Content -->
         <div class="profile-content">
             <!-- Profile Information Tab -->
-             <div class="tab-content active" id="profile-info"></div>
+            <div class="tab-content active" id="profile-info">
                 <div class="tab-header">
                     <h2>Profile Information</h2>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" id="firstName" value="John" required>
+
+                <form class="profile-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" id="lastName" required>
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" id="lastName" value="Doe" required>
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="email" value="john.doe@example.com" required>
-                </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone">
+                    </div>
 
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="phone" value="+20123456789" required>
-                </div>
+                    <div class="form-group">
+                        <label for="birthDate">Date of Birth</label>
+                        <input type="date" id="birthDate">
+                    </div>
 
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" id="birthDate" value="1990-01-01" required>
-                </div>
-
-                <button type="submit" class="save-btn btn btn-primary">Save Changes</button>
-            </form>
+                    <button type="submit" class="save-btn btn btn-primary">Save Changes</button>
+                </form>
+            </div>
 
             <!-- Manage Addresses Tab -->
             <div class="tab-content" id="manage-addresses">
@@ -151,27 +153,29 @@
             </div>
 
             <!-- Security Tab -->
-             <div class="tab-content" id="security">
+            <div class="tab-content" id="security">
                 <div class="tab-header">
                     <h2>Security Settings</h2>
                 </div>
-                
-                <div class="form-group">
-                    <label>Current Password</label>
-                    <input type="password" id="currentPassword" required>
-                </div>
 
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="newPassword" required>
-                </div>
+                <form class="security-form">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
 
-                <div class="form-group">
-                    <label>Confirm New Password</label>
-                    <input type="password" id="confirmPassword" required>
-                </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
 
-                <button type="button" class="save-btn btn btn-primary">Update Password</button>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+
+                    <button type="submit" class="save-btn btn btn-primary">Update Password</button>
+                </form>
 
                 <div class="security-options">
                     <h3>Privacy Settings</h3>
@@ -182,7 +186,7 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="toggle-option">
                         <span>Email Notifications</span>
                         <label class="toggle-switch">
@@ -191,7 +195,7 @@
                         </label>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -256,6 +260,7 @@
         </div>
     </section>
     <div class="menu-overlay" id="menuOverlay"></div>
+    <script src="JS/apiConfig.js"></script>
     <script src="JS/profile.js"></script>
     <script src="JS/menu.js"></script>
 </body>

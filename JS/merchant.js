@@ -2,46 +2,6 @@ const MerchantApp = (() => {
   'use strict';
   const API_BASE_URL = 'https://cartify.runasp.net/api';
 
-  // Cache to store attribute name to ID mapping
-  let attributeNameToIdMap = {};
-
-  // API Endpoints Configuration - Easy to modify in one place
-  const API_ENDPOINTS = {
-    // Products
-    products: {
-      getAll: (merchantId, page, pageSize) => `${API_BASE_URL}/merchant/products/merchant/${merchantId}?page=${page}&pageSize=${pageSize}`,
-      getById: (productId) => `${API_BASE_URL}/merchant/products/${productId}`,
-      create: () => `${API_BASE_URL}/merchant/products`,
-      update: (productId) => `${API_BASE_URL}/merchant/products/${productId}`,
-      delete: (productId) => `${API_BASE_URL}/merchant/products/${productId}`,
-      search: (name, page, pageSize) => `${API_BASE_URL}/merchant/products/search?name=${encodeURIComponent(name)}&page=${page}&pageSize=${pageSize}`
-    },
-    // Product Details (Variants)
-    productDetails: {
-      getByProductId: (productId) => `${API_BASE_URL}/merchant/products/${productId}/details`, // Note: May need to check if this endpoint exists
-      getById: (detailId) => `${API_BASE_URL}/merchant/products/details/${detailId}`,
-      create: () => `${API_BASE_URL}/merchant/products/details`,
-      update: () => `${API_BASE_URL}/merchant/products/details`,
-      delete: (detailId) => `${API_BASE_URL}/merchant/products/details/${detailId}`
-    },
-    // Inventory
-    inventory: {
-      getByProductDetailId: (productDetailId) => `${API_BASE_URL}/merchant/inventory/product-detail/${productDetailId}`,
-      create: (productDetailId) => `${API_BASE_URL}/merchant/inventory/product-detail/${productDetailId}`,
-      updateStock: (productDetailId) => `${API_BASE_URL}/merchant/inventory/product-detail/${productDetailId}/stock`,
-      delete: (inventoryId) => `${API_BASE_URL}/merchant/inventory/${inventoryId}`
-    }
-  };
-
-  // Navigation state for breadcrumbs
-  let navigationState = {
-    currentView: 'products', // 'products', 'productDetails', 'inventory'
-    currentProductId: null,
-    currentProductName: null,
-    currentProductDetailId: null,
-    currentProductDetailName: null
-  };
-
   const sectionLoaders = Object.freeze({
     Dashboard: loadDashboard,
     Customer: loadCustomer,
@@ -422,7 +382,7 @@ const MerchantApp = (() => {
     const hasShopperMode = getCurrentUserRoles().some(role => role && role !== MERCHANT_ROLE_NAME);
     const label = hasShopperMode ? 'Switch to Shopping Mode' : 'Go to Storefront';
     $switch.find('.switch-role-label').text(label);
-    $switch.off('click.merchant').on('click.merchant', function (e) {
+    $switch.off('click.merchant').on('click.merchant', function(e) {
       e.preventDefault();
       setRoleMode(ROLE_MODES.CUSTOMER);
       window.location.href = "index.html";
@@ -574,31 +534,31 @@ const MerchantApp = (() => {
       if (!authString) {
         authString = sessionStorage.getItem('Auth');
       }
-
+      
       // If no auth data found in either storage, return empty
       if (!authString) {
         console.warn('getAuthToken: No auth data found in localStorage or sessionStorage');
         return '';
       }
-
+      
       // Parse the JSON string
       const authData = JSON.parse(authString);
-
+      
       // Extract and validate the JWT token
       const token = authData?.jwt || authData?.token || '';
-
+      
       if (!token || typeof token !== 'string' || token.trim() === '') {
         console.warn('getAuthToken: Token is empty or invalid');
         return '';
       }
-
+      
       // Validate token format (should have 3 parts separated by dots)
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
         console.warn('getAuthToken: Invalid token format (expected 3 parts, got', tokenParts.length, ')');
         return '';
       }
-
+      
       console.log('getAuthToken: ✅ Valid token retrieved');
       return token.trim();
     } catch (error) {
@@ -615,9 +575,9 @@ const MerchantApp = (() => {
   // ==================== NOTIFICATION SYSTEM ====================
   function showNotification(message, type = 'success') {
     $('.custom-notification').remove();
-    const icon = type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' :
-      type === 'error' ? '<i class="bi bi-x-circle-fill"></i>' :
-        '<i class="bi bi-info-circle-fill"></i>';
+    const icon = type === 'success' ? '<i class="bi bi-check-circle-fill"></i>' : 
+                 type === 'error' ? '<i class="bi bi-x-circle-fill"></i>' : 
+                 '<i class="bi bi-info-circle-fill"></i>';
     const notification = $(`
       <div class="custom-notification ${type}">
         <div class="notification-content">
@@ -629,11 +589,11 @@ const MerchantApp = (() => {
     `);
     $('body').append(notification);
     notification.fadeIn(300);
-    notification.find('.notification-close').on('click', function () {
-      notification.fadeOut(300, function () { $(this).remove(); });
+    notification.find('.notification-close').on('click', function() {
+      notification.fadeOut(300, function() { $(this).remove(); });
     });
     setTimeout(() => {
-      notification.fadeOut(300, function () { $(this).remove(); });
+      notification.fadeOut(300, function() { $(this).remove(); });
     }, 4000);
   }
 
@@ -659,11 +619,11 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('confirmModal'));
     bsModal.show();
-    $('#confirmBtn').on('click', function () {
+    $('#confirmBtn').on('click', function() {
       onConfirm();
       bsModal.hide();
     });
-    $('#confirmModal').on('hidden.bs.modal', function () { $(this).remove(); });
+    $('#confirmModal').on('hidden.bs.modal', function() { $(this).remove(); });
   }
 
   // -------------------- [Product Categories and Attributes Data] --------------------
@@ -1246,23 +1206,23 @@ const MerchantApp = (() => {
       console.warn('getCurrentUserRoles: No token available');
       return [];
     }
-
+    
     const payload = parseJwt(token);
     if (!payload) {
       console.warn('getCurrentUserRoles: Failed to parse token payload');
       return [];
     }
-
+    
     // Extract roles from the JWT payload
     const rawRoles = payload[ROLE_CLAIM_PATH] || [];
-
+    
     // Handle both array and single string role formats
     const roles = Array.isArray(rawRoles) ? rawRoles : (rawRoles ? [rawRoles] : []);
-
+    
     // Filter out any null/undefined/empty values and return
     const validRoles = roles.filter(Boolean);
     console.log('getCurrentUserRoles: Extracted roles:', validRoles);
-
+    
     return validRoles;
   }
 
@@ -1283,7 +1243,7 @@ const MerchantApp = (() => {
 
     const token = getAuthToken();
     console.log('ensureMerchantAccess: Token retrieved:', token ? 'Token exists' : 'No token');
-
+    
     if (!token || token.trim() === '') {
       console.warn('ensureMerchantAccess: No valid token found, redirecting to login');
       // Small delay to prevent race conditions with other scripts
@@ -1294,22 +1254,22 @@ const MerchantApp = (() => {
       }, 100);
       return false;
     }
-
+    
     const roles = getCurrentUserRoles();
     console.log('ensureMerchantAccess: User roles extracted:', roles);
     console.log('ensureMerchantAccess: Looking for role:', MERCHANT_ROLE_NAME);
-
+    
     // Check if user has Merchant role (case-insensitive check for safety)
     // Also handle variations like "Merchant", "merchant", "MERCHANT"
     const hasMerchantRole = roles.some(role => {
       if (!role) return false;
       const roleStr = role.toString().trim();
       return roleStr.toLowerCase() === MERCHANT_ROLE_NAME.toLowerCase() ||
-        roleStr === MERCHANT_ROLE_NAME;
+             roleStr === MERCHANT_ROLE_NAME;
     });
-
+    
     console.log('ensureMerchantAccess: Has Merchant role?', hasMerchantRole);
-
+    
     if (!hasMerchantRole) {
       console.warn('ensureMerchantAccess: User does not have Merchant role. Roles found:', roles);
       console.warn('ensureMerchantAccess: Redirecting to index.html');
@@ -1320,7 +1280,7 @@ const MerchantApp = (() => {
       }, 100);
       return false;
     }
-
+    
     console.log('ensureMerchantAccess: ✅ Merchant access granted successfully');
     return true;
   }
@@ -1397,7 +1357,7 @@ const MerchantApp = (() => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         userId = payload.sub || payload.nameid;
-      } catch (e) {
+      } catch(e) {
         console.error('Error parsing token:', e);
       }
     }
@@ -1407,16 +1367,16 @@ const MerchantApp = (() => {
       $.ajax({
         url: `${API_BASE_URL}/merchant/products/merchant/${userId}?page=1&pageSize=1`,
         method: 'GET',
-        headers: {
+        headers: { 
           'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        success: function (response) {
+        success: function(response) {
           const totalProducts = response.totalCount || response.total || 0;
           $("#totalProducts").text(totalProducts);
         },
-        error: function (xhr) {
+        error: function(xhr) {
           console.error('Error fetching products count:', xhr);
           $("#totalProducts").text("0");
           if (xhr.status === 0 || xhr.statusText === 'error') {
@@ -1431,20 +1391,20 @@ const MerchantApp = (() => {
       try {
         const token = getAuthToken();
         if (!token) return;
-
+        
         const response = await fetch(`${API_BASE_URL}/merchant/customers/store/${storeId}/count`, {
           method: 'GET',
-          headers: {
+          headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
-
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
         const data = await response.json();
         $("#totalCustomers").text(data.totalCustomers || 0);
       } catch (error) {
@@ -1458,20 +1418,20 @@ const MerchantApp = (() => {
       try {
         const token = getAuthToken();
         if (!token) return;
-
+        
         const response = await fetch(`${API_BASE_URL}/merchant/orders/store/${storeId}?page=1&pageSize=1`, {
           method: 'GET',
-          headers: {
+          headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
-
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
         const data = await response.json();
         const totalOrders = data.totalCount || data.total || (data.items || data.Items || []).length || 0;
         $("#totalOrders").text(totalOrders);
@@ -1486,20 +1446,20 @@ const MerchantApp = (() => {
       try {
         const token = getAuthToken();
         if (!token) return;
-
+        
         const response = await fetch(`${API_BASE_URL}/merchant/transactions/store/${storeId}/summary?period=monthly`, {
           method: 'GET',
-          headers: {
+          headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
-
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
         const data = await response.json();
         const revenue = data.totalAmount || data.totalRevenue || 0;
         $("#totalRevenue").text("$" + parseFloat(revenue).toFixed(2));
@@ -1514,23 +1474,23 @@ const MerchantApp = (() => {
       try {
         const token = getAuthToken();
         if (!token) return;
-
+        
         const response = await fetch(`${API_BASE_URL}/merchant/orders/store/${storeId}?page=1&pageSize=5`, {
           method: 'GET',
-          headers: {
+          headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
-
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
         const data = await response.json();
         const orders = data.items || data.Items || data.data || data || [];
-
+        
         if (orders.length === 0) {
           $("#recentActivity").html("<p>No recent activity</p>");
         } else {
@@ -1621,7 +1581,7 @@ const MerchantApp = (() => {
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
+    
     const storeId = getStoreId();
     if (storeId) {
       fetchCustomers(storeId);
@@ -1629,23 +1589,23 @@ const MerchantApp = (() => {
     } else {
       $("#customerTableBody").html('<tr><td colspan="7" class="text-center text-danger">Store ID not found</td></tr>');
     }
-
-    $(document).off('click', '#btnRefreshCustomers').on('click', '#btnRefreshCustomers', function () {
+    
+    $(document).off('click', '#btnRefreshCustomers').on('click', '#btnRefreshCustomers', function() {
       const storeId = getStoreId();
       if (storeId) {
         fetchCustomers(storeId);
         fetchCustomerCount(storeId);
       }
     });
-
-    $(document).off('input', '#customerSearch').on('input', '#customerSearch', function () {
+    
+    $(document).off('input', '#customerSearch').on('input', '#customerSearch', function() {
       const term = $(this).val().toLowerCase();
-      $('#customerTableBody tr').each(function () {
+      $('#customerTableBody tr').each(function() {
         $(this).toggle($(this).text().toLowerCase().includes(term));
       });
     });
-
-    $(document).off('change', '#customerPageNumber, #customerPageSize').on('change', '#customerPageNumber, #customerPageSize', function () {
+    
+    $(document).off('change', '#customerPageNumber, #customerPageSize').on('change', '#customerPageNumber, #customerPageSize', function() {
       const storeId = getStoreId();
       if (storeId) fetchCustomers(storeId);
     });
@@ -1654,20 +1614,20 @@ const MerchantApp = (() => {
   function fetchCustomers(storeId, page = 1, pageSize = 10) {
     page = parseInt($('#customerPageNumber').val()) || page;
     pageSize = parseInt($('#customerPageSize').val()) || pageSize;
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/customers/store/${storeId}?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const customers = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || customers.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderCustomersTable(customers);
         updateCustomerPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching customers:', xhr);
         let errorMsg = 'Error loading customers';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1683,11 +1643,11 @@ const MerchantApp = (() => {
       url: `${API_BASE_URL}/merchant/customers/store/${storeId}/count`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const count = response.totalCustomers || response.count || 0;
         $('#customerCount').text(`${count} customer${count !== 1 ? 's' : ''}`);
       },
-      error: function () {
+      error: function() {
         $('#customerCount').text('0 customers');
       }
     });
@@ -1735,20 +1695,20 @@ const MerchantApp = (() => {
     $("#customerTableBody").html(html);
   }
 
-  window.viewCustomerDetails = function (customerId) {
+  window.viewCustomerDetails = function(customerId) {
     if (!customerId) {
       showNotification('Customer ID is required', 'error');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/customers/${customerId}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (customer) {
+      success: function(customer) {
         showCustomerDetailsModal(customer);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching customer details:', xhr);
         let errorMsg = 'Error loading customer details';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1801,7 +1761,7 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('customerDetailsModal'));
     bsModal.show();
-    $('#customerDetailsModal').on('hidden.bs.modal', function () {
+    $('#customerDetailsModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
   }
@@ -1863,11 +1823,11 @@ const MerchantApp = (() => {
     `;
     $("#dynamicContentContainer").show().html(html);
     fetchOrders();
-
-    $(document).off('input', '#orderSearch').on('input', '#orderSearch', function () {
+    
+    $(document).off('input', '#orderSearch').on('input', '#orderSearch', function() {
       filterOrders();
     });
-    $(document).off('change', '#orderStatusFilter').on('change', '#orderStatusFilter', function () {
+    $(document).off('change', '#orderStatusFilter').on('change', '#orderStatusFilter', function() {
       filterOrders();
     });
   }
@@ -1877,10 +1837,10 @@ const MerchantApp = (() => {
       url: `${API_BASE_URL}/Orders`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (data) {
+      success: function(data) {
         renderOrdersTable(data);
       },
-      error: function () {
+      error: function() {
         $("#orderTableBody").html('<tr><td colspan="6" class="text-center text-danger">Error loading orders</td></tr>');
       }
     });
@@ -1909,7 +1869,7 @@ const MerchantApp = (() => {
         'Delivered': 'bg-success',
         'Cancelled': 'bg-danger'
       }[order.status] || 'bg-secondary';
-
+      
       html += `
         <tr class="table-row-hover" data-status="${order.status || ''}">
           <td><strong>#${order.id || 'N/A'}</strong></td>
@@ -1937,8 +1897,8 @@ const MerchantApp = (() => {
   function filterOrders() {
     const searchTerm = $('#orderSearch').val().toLowerCase();
     const statusFilter = $('#orderStatusFilter').val();
-
-    $('#orderTableBody tr').each(function () {
+    
+    $('#orderTableBody tr').each(function() {
       const text = $(this).text().toLowerCase();
       const status = $(this).data('status') || '';
       const matchesSearch = text.includes(searchTerm);
@@ -1947,15 +1907,15 @@ const MerchantApp = (() => {
     });
   }
 
-  window.viewOrderDetails = function (id) {
+  window.viewOrderDetails = function(id) {
     $.ajax({
       url: `${API_BASE_URL}/Orders/${id}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (order) {
+      success: function(order) {
         showOrderDetailsModal(order);
       },
-      error: function () {
+      error: function() {
         showNotification('Error loading order details', 'error');
       }
     });
@@ -1970,7 +1930,7 @@ const MerchantApp = (() => {
         <td>$${parseFloat((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td>
       </tr>
     `).join('') || '<tr><td colspan="4" class="text-center">No items</td></tr>';
-
+    
     const modal = $(`
       <div class="modal fade" id="orderDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -2016,10 +1976,10 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
     bsModal.show();
-    $('#orderDetailsModal').on('hidden.bs.modal', function () { $(this).remove(); });
+    $('#orderDetailsModal').on('hidden.bs.modal', function() { $(this).remove(); });
   }
 
-  window.updateOrderStatus = function (id) {
+  window.updateOrderStatus = function(id) {
     const modal = $(`
       <div class="modal fade" id="updateStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -2054,25 +2014,25 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
     bsModal.show();
-    $('#updateStatusModal').on('hidden.bs.modal', function () { $(this).remove(); });
+    $('#updateStatusModal').on('hidden.bs.modal', function() { $(this).remove(); });
   };
 
-  window.saveOrderStatus = function () {
+  window.saveOrderStatus = function() {
     const orderId = $('#orderId').val();
     const newStatus = $('#newStatus').val();
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Orders/${orderId}/status`,
       method: 'PUT',
       contentType: 'application/json',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
       data: JSON.stringify({ status: newStatus }),
-      success: function () {
+      success: function() {
         bootstrap.Modal.getInstance(document.getElementById('updateStatusModal')).hide();
         fetchOrders();
         showNotification('Order status updated successfully', 'success');
       },
-      error: function () {
+      error: function() {
         showNotification('Error updating order status', 'error');
       }
     });
@@ -2127,9 +2087,9 @@ const MerchantApp = (() => {
     `;
     $("#dynamicContentContainer").show().html(html);
     fetchCategories();
-
+    
     $(document).off('click', '#btnAddCategory').on('click', '#btnAddCategory', showCategoryModal);
-    $(document).off('change', '#categoryPageNumber, #categoryPageSize').on('change', '#categoryPageNumber, #categoryPageSize', function () {
+    $(document).off('change', '#categoryPageNumber, #categoryPageSize').on('change', '#categoryPageNumber, #categoryPageSize', function() {
       fetchCategories();
     });
   }
@@ -2137,34 +2097,34 @@ const MerchantApp = (() => {
   function fetchCategories(page = 1, pageSize = 10) {
     page = parseInt($('#categoryPageNumber').val()) || page;
     pageSize = parseInt($('#categoryPageSize').val()) || pageSize;
-
+    
     const token = getAuthToken();
     if (!token) {
       $("#categoryTableBody").html(`<tr><td colspan="7" class="text-center text-danger">Authentication required. Please login again.</td></tr>`);
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         console.log('Categories API Response:', response);
         const categories = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || categories.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderCategoriesTable(categories);
         updateCategoryPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching categories:', xhr);
         console.error('Status:', xhr.status);
         console.error('Response:', xhr.responseJSON || xhr.responseText);
-
+        
         let errorMsg = 'Error loading categories';
         if (xhr.status === 0 || xhr.statusText === 'error') {
           errorMsg = `CORS error: Unable to connect to API. The backend needs to allow requests from ${window.location.origin}. Please check Program.cs CORS configuration.`;
@@ -2201,12 +2161,12 @@ const MerchantApp = (() => {
         categoryId = categoryId.value || categoryId.id || null;
       }
       categoryId = categoryId ? String(categoryId) : null;
-
+      
       if (!categoryId) {
         console.warn('Category without ID:', category);
         return; // Skip categories without valid IDs
       }
-
+      
       html += `
         <tr>
           <td>${categoryId}</td>
@@ -2239,11 +2199,11 @@ const MerchantApp = (() => {
       url: `${API_BASE_URL}/Category/${categoryId}/products/count`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const count = response.productCount || 0;
         $(`#productCount-${categoryId}`).text(count);
       },
-      error: function () {
+      error: function() {
         $(`#productCount-${categoryId}`).text('0');
       }
     });
@@ -2259,7 +2219,7 @@ const MerchantApp = (() => {
         categoryIdValue = String(id);
       }
     }
-
+    
     const isEdit = categoryIdValue !== '';
     const modal = `
       <div class="modal fade" id="categoryModal" tabindex="-1">
@@ -2304,7 +2264,7 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('categoryModal'));
     bsModal.show();
-    $('#categoryModal').on('hidden.bs.modal', function () {
+    $('#categoryModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
     if (isEdit && categoryIdValue) {
@@ -2312,7 +2272,7 @@ const MerchantApp = (() => {
     }
   }
 
-  window.viewCategoryDetails = function (categoryId) {
+  window.viewCategoryDetails = function(categoryId) {
     // Ensure ID is a string/number, not an object
     if (!categoryId) {
       showNotification('Category ID is required', 'error');
@@ -2326,37 +2286,37 @@ const MerchantApp = (() => {
       }
     }
     categoryId = String(categoryId);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     // Fetch category details
     $.ajax({
       url: `${API_BASE_URL}/Category/${categoryId}`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (category) {
+      success: function(category) {
         // Fetch product count
         $.ajax({
           url: `${API_BASE_URL}/Category/${categoryId}/products/count`,
           method: 'GET',
           headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function (countResponse) {
+          success: function(countResponse) {
             const productCount = countResponse.productCount || 0;
             showCategoryDetailsModal(category, productCount);
           },
-          error: function () {
+          error: function() {
             showCategoryDetailsModal(category, 0);
           }
         });
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching category:', xhr);
         alert('Error loading category details');
       }
@@ -2405,26 +2365,26 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('categoryDetailsModal'));
     bsModal.show();
-    $('#categoryDetailsModal').on('hidden.bs.modal', function () {
+    $('#categoryDetailsModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
   }
 
-  window.viewProductsByCategory = function (categoryId) {
+  window.viewProductsByCategory = function(categoryId) {
     if (!categoryId) {
       alert('Category ID is required');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/${categoryId}/products?page=1&pageSize=10`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const products = response.data || response.items || response || [];
         showProductsModal(products, `Products in Category ${categoryId}`);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching products:', xhr);
         alert('Error loading products');
       }
@@ -2448,7 +2408,7 @@ const MerchantApp = (() => {
       });
       productsHtml += '</tbody></table></div>';
     }
-
+    
     const modal = `
       <div class="modal fade" id="productsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -2470,12 +2430,12 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('productsModal'));
     bsModal.show();
-    $('#productsModal').on('hidden.bs.modal', function () {
+    $('#productsModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
   }
 
-  window.editCategory = function (id) {
+  window.editCategory = function(id) {
     // Ensure ID is a string/number, not an object
     if (!id) {
       showNotification('Category ID is required', 'error');
@@ -2491,7 +2451,7 @@ const MerchantApp = (() => {
     showCategoryModal(String(id));
   };
 
-  window.deleteCategory = function (id) {
+  window.deleteCategory = function(id) {
     // Ensure ID is a string/number, not an object
     if (!id) {
       showNotification('Category ID is required', 'error');
@@ -2505,26 +2465,26 @@ const MerchantApp = (() => {
       }
     }
     id = String(id);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
-    showConfirmModal('Delete Category', 'Are you sure you want to delete this category?', function () {
+    
+    showConfirmModal('Delete Category', 'Are you sure you want to delete this category?', function() {
       $.ajax({
         url: `${API_BASE_URL}/Category/${id}`,
         method: 'DELETE',
-        headers: {
+        headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        success: function (response) {
+        success: function(response) {
           fetchCategories();
           showNotification('Category deleted successfully', 'success');
         },
-        error: function (xhr) {
+        error: function(xhr) {
           console.error('Error deleting category:', xhr);
           let errorMsg = 'Error deleting category';
           if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -2536,10 +2496,10 @@ const MerchantApp = (() => {
     });
   };
 
-  window.saveCategory = function () {
+  window.saveCategory = function() {
     let categoryId = $('#categoryId').val();
     const categoryName = $('#categoryName').val();
-
+    
     // Ensure categoryId is a valid string/number, not an object
     if (categoryId) {
       if (typeof categoryId === 'object') {
@@ -2551,53 +2511,53 @@ const MerchantApp = (() => {
         }
       }
     }
-
+    
     if (!categoryName || categoryName.trim() === '') {
       showNotification('Category name is required', 'error');
       return;
     }
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     const formData = new FormData();
     formData.append('CategoryName', categoryName.trim());
     formData.append('CategoryDescription', $('#categoryDescription').val() || '');
-
+    
     const imageFile = $('#categoryImage')[0].files[0];
     if (imageFile) {
       formData.append('Image', imageFile);
     }
-
+    
     const method = categoryId ? 'PUT' : 'POST';
     const url = categoryId ? `${API_BASE_URL}/Category/${categoryId}` : `${API_BASE_URL}/Category`;
-
+    
     console.log(`Saving category: ${method} ${url}`);
     console.log('Category ID:', categoryId);
-
+    
     $.ajax({
       url: url,
       method: method,
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`
       },
       processData: false,
       contentType: false,
       data: formData,
-      success: function (response) {
+      success: function(response) {
         console.log('Category saved successfully:', response);
         bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
         fetchCategories();
         showNotification(`Category ${categoryId ? 'updated' : 'created'} successfully`, 'success');
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error saving category:', xhr);
         console.error('Status:', xhr.status);
         console.error('Response:', xhr.responseJSON || xhr.responseText);
-
+        
         let errorMsg = 'Error saving category';
         if (xhr.status === 0 || xhr.statusText === 'error') {
           errorMsg = `CORS error: Unable to connect to API. The backend needs to allow requests from ${window.location.origin}. Please check Program.cs CORS configuration.`;
@@ -2633,23 +2593,23 @@ const MerchantApp = (() => {
       }
     }
     id = String(id);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/${id}`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (data) {
+      success: function(data) {
         console.log('Category data loaded:', data);
-
+        
         // Extract and set category ID as string
         const loadedId = data.categoryId || data.id || data.CategoryId || data.ID;
         if (loadedId) {
@@ -2659,11 +2619,11 @@ const MerchantApp = (() => {
           showNotification('Error: Category ID not found in response', 'error');
           return;
         }
-
+        
         $('#categoryName').val(data.categoryName || data.name || data.CategoryName || '');
         $('#categoryDescription').val(data.categoryDescription || data.CategoryDescription || data.description || data.Description || '');
         $('#categoryIsActive').prop('checked', data.isActive !== false && data.isActive !== undefined);
-
+        
         // If there's an existing image, show it
         if (data.imageUrl || data.image || data.ImageUrl) {
           const imageUrl = data.imageUrl || data.image || data.ImageUrl;
@@ -2673,11 +2633,11 @@ const MerchantApp = (() => {
           $('#categoryImage').parent().append(imagePreview);
         }
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error loading category:', xhr);
         console.error('Status:', xhr.status);
         console.error('Response:', xhr.responseJSON || xhr.responseText);
-
+        
         let errorMsg = 'Error loading category data';
         if (xhr.status === 0 || xhr.statusText === 'error') {
           errorMsg = `CORS error: Unable to connect to API. The backend needs to allow requests from ${window.location.origin}. Please check Program.cs CORS configuration.`;
@@ -2745,9 +2705,9 @@ const MerchantApp = (() => {
     `;
     $("#dynamicContentContainer").show().html(html);
     fetchSubcategories();
-
+    
     $(document).off('click', '#btnAddSubcategory').on('click', '#btnAddSubcategory', showSubcategoryModal);
-    $(document).off('change', '#subcategoryPageNumber, #subcategoryPageSize').on('change', '#subcategoryPageNumber, #subcategoryPageSize', function () {
+    $(document).off('change', '#subcategoryPageNumber, #subcategoryPageSize').on('change', '#subcategoryPageNumber, #subcategoryPageSize', function() {
       fetchSubcategories();
     });
   }
@@ -2755,15 +2715,15 @@ const MerchantApp = (() => {
   function fetchSubcategories(page = 1, pageSize = 10) {
     page = parseInt($('#subcategoryPageNumber').val()) || page;
     pageSize = parseInt($('#subcategoryPageSize').val()) || pageSize;
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/subcategory`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (data) {
+      success: function(data) {
         renderSubcategoriesTable(data);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching subcategories:', xhr);
         let errorMsg = 'Error loading subcategories';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -2773,7 +2733,7 @@ const MerchantApp = (() => {
       }
     });
   }
-
+  
   function updateSubcategoryPaginationInfo(currentPage, totalPages, totalCount) {
     $('#subcategoryPaginationInfo').text(`Page ${currentPage} of ${totalPages} (Total: ${totalCount} subcategories)`);
   }
@@ -2787,26 +2747,26 @@ const MerchantApp = (() => {
     subcategories.forEach(sub => {
       // Extract subcategory ID properly - handle different property names and ensure it's a number/string
       // Note: 0 is a valid ID, so we need to check for null/undefined specifically, not just falsy values
-      let subcategoryId = sub.subCategoryId !== undefined && sub.subCategoryId !== null ? sub.subCategoryId
-        : sub.id !== undefined && sub.id !== null ? sub.id
-          : sub.SubCategoryId !== undefined && sub.SubCategoryId !== null ? sub.SubCategoryId
-            : sub.ID !== undefined && sub.ID !== null ? sub.ID
-              : null;
-
+      let subcategoryId = sub.subCategoryId !== undefined && sub.subCategoryId !== null ? sub.subCategoryId 
+                       : sub.id !== undefined && sub.id !== null ? sub.id
+                       : sub.SubCategoryId !== undefined && sub.SubCategoryId !== null ? sub.SubCategoryId
+                       : sub.ID !== undefined && sub.ID !== null ? sub.ID
+                       : null;
+      
       if (subcategoryId !== null && subcategoryId !== undefined && typeof subcategoryId === 'object') {
-        subcategoryId = subcategoryId.value !== undefined ? subcategoryId.value
-          : subcategoryId.id !== undefined ? subcategoryId.id
-            : null;
+        subcategoryId = subcategoryId.value !== undefined ? subcategoryId.value 
+                     : subcategoryId.id !== undefined ? subcategoryId.id 
+                     : null;
       }
-
+      
       // Convert to string, but allow 0 as valid ID
       if (subcategoryId === null || subcategoryId === undefined) {
         console.warn('Subcategory without ID:', sub);
         return; // Skip subcategories without valid IDs
       }
-
+      
       subcategoryId = String(subcategoryId);
-
+      
       html += `
         <tr>
           <td>${subcategoryId}</td>
@@ -2841,7 +2801,7 @@ const MerchantApp = (() => {
         subcategoryIdValue = String(id);
       }
     }
-
+    
     const isEdit = subcategoryIdValue !== '';
     const modal = `
       <div class="modal fade" id="subcategoryModal" tabindex="-1">
@@ -2887,7 +2847,7 @@ const MerchantApp = (() => {
     loadCategoriesForSubcategory();
     const bsModal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
     bsModal.show();
-    $('#subcategoryModal').on('hidden.bs.modal', function () {
+    $('#subcategoryModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
     if (isEdit) loadSubcategoryData(subcategoryIdValue);
@@ -2898,7 +2858,7 @@ const MerchantApp = (() => {
       url: `${API_BASE_URL}/Category?page=1&pageSize=100`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const categories = response.data || response.items || response || [];
         const select = $('#subcategoryCategoryId');
         select.empty().append('<option value="">Select Category</option>');
@@ -2910,13 +2870,13 @@ const MerchantApp = (() => {
           });
         }
       },
-      error: function () {
+      error: function() {
         console.error('Error loading categories for subcategory');
       }
     });
   }
 
-  window.viewSubcategoryDetails = function (subcategoryId) {
+  window.viewSubcategoryDetails = function(subcategoryId) {
     // Ensure ID is a string/number, not an object
     if (!subcategoryId) {
       showNotification('Subcategory ID is required', 'error');
@@ -2930,24 +2890,24 @@ const MerchantApp = (() => {
       }
     }
     subcategoryId = String(subcategoryId);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/subcategory/${subcategoryId}`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (subcategory) {
+      success: function(subcategory) {
         showSubcategoryDetailsModal(subcategory);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching subcategory:', xhr);
         alert('Error loading subcategory details');
       }
@@ -2960,7 +2920,7 @@ const MerchantApp = (() => {
       subcategoryId = subcategoryId.value || subcategoryId.id || null;
     }
     subcategoryId = subcategoryId ? String(subcategoryId) : 'N/A';
-
+    
     const modal = `
       <div class="modal fade" id="subcategoryDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -3001,12 +2961,12 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('subcategoryDetailsModal'));
     bsModal.show();
-    $('#subcategoryDetailsModal').on('hidden.bs.modal', function () {
+    $('#subcategoryDetailsModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
   }
 
-  window.viewProductsBySubcategory = function (subcategoryId) {
+  window.viewProductsBySubcategory = function(subcategoryId) {
     // Ensure ID is a string/number, not an object
     if (!subcategoryId) {
       showNotification('Subcategory ID is required', 'error');
@@ -3020,32 +2980,32 @@ const MerchantApp = (() => {
       }
     }
     subcategoryId = String(subcategoryId);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/subcategory/${subcategoryId}/products?page=1&pageSize=10`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         const products = response.data || response.items || response || [];
         showProductsModal(products, `Products in Subcategory ${subcategoryId}`);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching products:', xhr);
         alert('Error loading products');
       }
     });
   };
 
-  window.editSubcategory = function (id) {
+  window.editSubcategory = function(id) {
     // Ensure ID is a string/number, not an object
     if (!id) {
       showNotification('Subcategory ID is required', 'error');
@@ -3061,7 +3021,7 @@ const MerchantApp = (() => {
     showSubcategoryModal(String(id));
   };
 
-  window.deleteSubcategory = function (id) {
+  window.deleteSubcategory = function(id) {
     // Ensure ID is a string/number, not an object
     if (!id) {
       showNotification('Subcategory ID is required', 'error');
@@ -3075,26 +3035,26 @@ const MerchantApp = (() => {
       }
     }
     id = String(id);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
-    showConfirmModal('Delete Subcategory', 'Are you sure you want to delete this subcategory?', function () {
+    
+    showConfirmModal('Delete Subcategory', 'Are you sure you want to delete this subcategory?', function() {
       $.ajax({
         url: `${API_BASE_URL}/Category/subcategory/${id}`,
         method: 'DELETE',
-        headers: {
+        headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        success: function (response) {
+        success: function(response) {
           fetchSubcategories();
           showNotification('Subcategory deleted successfully', 'success');
         },
-        error: function (xhr) {
+        error: function(xhr) {
           console.error('Error deleting subcategory:', xhr);
           let errorMsg = 'Error deleting subcategory';
           if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -3106,37 +3066,37 @@ const MerchantApp = (() => {
     });
   };
 
-  window.saveSubcategory = function () {
+  window.saveSubcategory = function() {
     const subcategoryId = $('#subcategoryId').val();
     const formData = new FormData();
-
+    
     formData.append('SubCategoryName', $('#subcategoryName').val());
     formData.append('SubCategoryDescription', $('#subcategoryDescription').val() || '');
     formData.append('CategoryId', $('#subcategoryCategoryId').val());
-
+    
     const imageFile = $('#subcategoryImage')[0]?.files[0];
     if (imageFile) {
       formData.append('Image', imageFile);
     }
-
+    
     const method = subcategoryId ? 'PUT' : 'POST';
     const url = subcategoryId ? `${API_BASE_URL}/Category/subcategory/${subcategoryId}` : `${API_BASE_URL}/Category/subcategory`;
-
+    
     $.ajax({
       url: url,
       method: method,
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${getAuthToken()}`
       },
       processData: false,
       contentType: false,
       data: formData,
-      success: function (response) {
+      success: function(response) {
         bootstrap.Modal.getInstance(document.getElementById('subcategoryModal')).hide();
         fetchSubcategories();
         showNotification(`Subcategory ${subcategoryId ? 'updated' : 'created'} successfully`, 'success');
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error saving subcategory:', xhr);
         let errorMsg = 'Error saving subcategory';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -3161,23 +3121,23 @@ const MerchantApp = (() => {
       }
     }
     id = String(id);
-
+    
     const token = getAuthToken();
     if (!token) {
       showNotification('Authentication required. Please login again.', 'error');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/Category/subcategory/${id}`,
       method: 'GET',
-      headers: {
+      headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (data) {
+      success: function(data) {
         console.log('Subcategory data loaded:', data);
-
+        
         // Extract and set subcategory ID as string
         const loadedId = data.subCategoryId || data.id || data.SubCategoryId || data.ID;
         if (loadedId) {
@@ -3187,17 +3147,17 @@ const MerchantApp = (() => {
           showNotification('Error: Subcategory ID not found in response', 'error');
           return;
         }
-
+        
         // Set category ID
         const catId = data.categoryId || data.CategoryId || data.categoryID;
         if (catId) {
           $('#subcategoryCategoryId').val(String(catId));
         }
-
+        
         $('#subcategoryName').val(data.subCategoryName || data.name || data.SubCategoryName || '');
         $('#subcategoryDescription').val(data.subCategoryDescription || data.description || data.SubCategoryDescription || '');
         $('#subcategoryIsActive').prop('checked', data.isActive !== false && data.isActive !== undefined);
-
+        
         // If there's an existing image, show it
         if (data.imageUrl || data.image || data.ImageUrl) {
           const imageUrl = data.imageUrl || data.image || data.ImageUrl;
@@ -3207,11 +3167,11 @@ const MerchantApp = (() => {
           $('#subcategoryImage').parent().append(imagePreview);
         }
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error loading subcategory:', xhr);
         console.error('Status:', xhr.status);
         console.error('Response:', xhr.responseJSON || xhr.responseText);
-
+        
         let errorMsg = 'Error loading subcategory data';
         if (xhr.status === 0 || xhr.statusText === 'error') {
           errorMsg = `CORS error: Unable to connect to API. The backend needs to allow requests from ${window.location.origin}. Please check Program.cs CORS configuration.`;
@@ -3312,13 +3272,13 @@ const MerchantApp = (() => {
     const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
     const token = authData.jwt;
     if (!token) return;
-
+    
     // Use the new merchant profile endpoint
     $.ajax({
       url: `${API_BASE_URL}/merchant/profile/me`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` },
-      success: function (data) {
+      success: function(data) {
         $('#profileId').val(data.userId || '');
         $('#profileStoreName').val(data.storeName || '');
         $('#profileEmail').val(data.email || '');
@@ -3328,13 +3288,13 @@ const MerchantApp = (() => {
           $('#profileImagePreview').attr('src', data.logoUrl);
         }
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.log('Error loading profile:', xhr);
       }
     });
   }
 
-  window.saveProfile = function () {
+  window.saveProfile = function() {
     const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
     const token = authData.jwt;
     let userId = null;
@@ -3342,16 +3302,16 @@ const MerchantApp = (() => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         userId = payload.sub || payload.nameid;
-      } catch (e) {
+      } catch(e) {
         console.error('Error parsing token:', e);
       }
     }
-
+    
     if (!userId) {
       alert('User ID not found');
       return;
     }
-
+    
     // Update profile
     const profileData = {
       userId: userId,
@@ -3360,14 +3320,14 @@ const MerchantApp = (() => {
       email: $('#profileEmail').val(),
       phoneNumber: $('#profilePhone').val()
     };
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/profile`,
       method: 'PUT',
       contentType: 'application/json',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
       data: JSON.stringify(profileData),
-      success: function () {
+      success: function() {
         // Update store info if storeId is available
         const storeId = getStoreId();
         if (storeId) {
@@ -3375,26 +3335,26 @@ const MerchantApp = (() => {
           formData.append('StoreId', storeId);
           formData.append('StoreName', $('#profileStoreName').val());
           formData.append('Description', $('#profileDescription').val() || '');
-
+          
           const logoFile = $('#profileLogo')[0]?.files[0];
           if (logoFile) {
             formData.append('Logo', logoFile);
           }
-
+          
           $.ajax({
             url: `${API_BASE_URL}/merchant/profile/store`,
             method: 'PUT',
-            headers: {
+            headers: { 
               'Authorization': `Bearer ${getAuthToken()}`
             },
             processData: false,
             contentType: false,
             data: formData,
-            success: function () {
+            success: function() {
               alert('Profile updated successfully');
               loadProfileData();
             },
-            error: function () {
+            error: function() {
               alert('Profile updated but store info update failed');
               loadProfileData();
             }
@@ -3404,22 +3364,22 @@ const MerchantApp = (() => {
           loadProfileData();
         }
       },
-      error: function () {
+      error: function() {
         alert('Error updating profile');
       }
     });
   };
 
-  window.changePassword = function () {
+  window.changePassword = function() {
     const oldPassword = $('#profileOldPassword').val();
     const newPassword = $('#profileNewPassword').val();
     const confirmPassword = $('#profileConfirmPassword').val();
-
+    
     if (newPassword !== confirmPassword) {
       alert('New passwords do not match');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/profile/change-password`,
       method: 'POST',
@@ -3429,11 +3389,11 @@ const MerchantApp = (() => {
         oldPassword: oldPassword,
         newPassword: newPassword
       }),
-      success: function () {
+      success: function() {
         alert('Password changed successfully');
         $('#profileOldPassword, #profileNewPassword, #profileConfirmPassword').val('');
       },
-      error: function (xhr) {
+      error: function(xhr) {
         let errorMsg = 'Error changing password';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
@@ -3445,32 +3405,11 @@ const MerchantApp = (() => {
 
   // ==================== PRODUCTS LIST SECTION ====================
   function loadProductsList() {
-    // Reset navigation state
-    navigationState = {
-      currentView: 'products',
-      currentProductId: null,
-      currentProductName: null,
-      currentProductDetailId: null,
-      currentProductDetailName: null
-    };
-
     const html = `
       <div class="section-container">
-        <!-- Breadcrumb Navigation -->
-        <nav aria-label="breadcrumb" class="mb-3">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><i class="bi bi-box-seam me-1"></i>Products</li>
-          </ol>
-        </nav>
-        
-        <!-- Header with Search and Actions -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title mb-0"><i class="bi bi-box-seam me-2"></i>Products Management</h2>
-          <div class="d-flex gap-2 align-items-center">
-            <div class="input-group" style="width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="productSearchInput" placeholder="Search products...">
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="section-title"><i class="bi bi-box-seam me-2"></i>Products Management</h2>
+          <div class="d-flex gap-2">
             <button class="btn btn-success" id="btnAddNewProduct">
               <i class="bi bi-plus-circle me-2"></i>Add New Product
             </button>
@@ -3479,70 +3418,44 @@ const MerchantApp = (() => {
             </button>
           </div>
         </div>
-        
-        <!-- Products Grid/Table View -->
-        <div class="card shadow-sm">
+        <div class="card">
           <div class="card-body">
-            <!-- View Toggle -->
-            <div class="d-flex justify-content-end mb-3">
-              <div class="btn-group" role="group">
-                <input type="radio" class="btn-check" name="viewToggle" id="viewTable" checked>
-                <label class="btn btn-outline-primary" for="viewTable"><i class="bi bi-list-ul"></i> Table</label>
-                <input type="radio" class="btn-check" name="viewToggle" id="viewGrid">
-                <label class="btn btn-outline-primary" for="viewGrid"><i class="bi bi-grid-3x3-gap"></i> Grid</label>
-              </div>
+            <div class="table-responsive">
+              <table class="table table-hover" id="productsTable">
+                <thead>
+                  <tr>
+                    <th>Product ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                  <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                </tbody>
+              </table>
             </div>
-            
-            <!-- Table View -->
-            <div id="productsTableView" class="products-view">
-              <div class="table-responsive">
-                <table class="table table-hover align-middle" id="productsTable">
-                  <thead>
-                    <tr>
-                      <th style="width: 80px;">Image</th>
-                      <th>Product ID</th>
-                      <th>Name</th>
-                      <th>Description</th>
-                      <th>Category</th>
-                      <th>Status</th>
-                      <th style="width: 200px;">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="productsTableBody">
-                    <tr><td colspan="7" class="text-center py-4"><i class="bi bi-arrow-repeat spin me-2"></i>Loading products...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            
-            <!-- Grid View -->
-            <div id="productsGridView" class="products-view" style="display: none;">
-              <div class="row g-4" id="productsGridBody">
-                <div class="col-12 text-center py-4"><i class="bi bi-arrow-repeat spin me-2"></i>Loading products...</div>
-              </div>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="d-flex justify-content-between align-items-center mt-4">
-              <div class="d-flex align-items-center gap-2">
-                <label class="mb-0">Page:</label>
-                <input type="number" id="productsPageNumber" class="form-control" style="width: 80px;" value="1" min="1">
-                <label class="mb-0">Page Size:</label>
-                <select id="productsPageSize" class="form-select" style="width: 100px;">
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div>
+                <label class="me-2">Page:</label>
+                <input type="number" id="productsPageNumber" class="form-control d-inline-block" style="width: 80px;" value="1" min="1">
+                <label class="ms-2 me-2">Page Size:</label>
+                <select id="productsPageSize" class="form-select d-inline-block" style="width: 100px;">
                   <option value="10">10</option>
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </select>
               </div>
-              <div id="productsPaginationInfo" class="text-muted"></div>
+              <div id="productsPaginationInfo"></div>
             </div>
           </div>
         </div>
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
-    // Get merchant ID from token
+    
     const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
     const token = authData.jwt;
     let userId = null;
@@ -3550,167 +3463,83 @@ const MerchantApp = (() => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         userId = payload.sub || payload.nameid;
-      } catch (e) {
+      } catch(e) {
         console.error('Error parsing token:', e);
       }
     }
-
-    // Load products
+    
     if (userId) {
       fetchProducts(userId);
     } else {
-      $("#productsTableBody").html('<tr><td colspan="7" class="text-center text-danger py-4">User ID not found. Please login again.</td></tr>');
-      $("#productsGridBody").html('<div class="col-12 text-center text-danger py-4">User ID not found. Please login again.</div>');
+      $("#productsTableBody").html('<tr><td colspan="6" class="text-center text-danger">User ID not found</td></tr>');
     }
-
-    // Bind event handlers
-    $(document).off('click', '#btnRefreshProducts').on('click', '#btnRefreshProducts', function () {
+    
+    $(document).off('click', '#btnRefreshProducts').on('click', '#btnRefreshProducts', function() {
       if (userId) fetchProducts(userId);
     });
-
-    $(document).off('click', '#btnAddNewProduct').on('click', '#btnAddNewProduct', function () {
-      showAddProductModal();
+    
+    $(document).off('click', '#btnAddNewProduct').on('click', '#btnAddNewProduct', function() {
+      $("#dynamicContentContainer").hide();
+      $("#productWizardContainer").show();
     });
-
-    $(document).off('change', '#productsPageNumber, #productsPageSize').on('change', '#productsPageNumber, #productsPageSize', function () {
+    
+    $(document).off('change', '#productsPageNumber, #productsPageSize').on('change', '#productsPageNumber, #productsPageSize', function() {
       if (userId) fetchProducts(userId);
-    });
-
-    // Search functionality
-    let searchTimeout;
-    $(document).off('input', '#productSearchInput').on('input', '#productSearchInput', function () {
-      clearTimeout(searchTimeout);
-      const searchTerm = $(this).val().trim();
-      searchTimeout = setTimeout(() => {
-        if (searchTerm.length >= 2 || searchTerm.length === 0) {
-          if (userId) {
-            if (searchTerm.length === 0) {
-              fetchProducts(userId);
-            } else {
-              searchProducts(userId, searchTerm);
-            }
-          }
-        }
-      }, 500);
-    });
-
-    // View toggle
-    $(document).off('change', 'input[name="viewToggle"]').on('change', 'input[name="viewToggle"]', function () {
-      if ($(this).attr('id') === 'viewTable') {
-        $('#productsTableView').show();
-        $('#productsGridView').hide();
-      } else {
-        $('#productsTableView').hide();
-        $('#productsGridView').show();
-      }
     });
   }
 
   function fetchProducts(merchantId, page = 1, pageSize = 10) {
     page = parseInt($('#productsPageNumber').val()) || page;
     pageSize = parseInt($('#productsPageSize').val()) || pageSize;
-
-    const url = API_ENDPOINTS.products.getAll(merchantId, page, pageSize);
-
+    
     $.ajax({
-      url: url,
+      url: `${API_BASE_URL}/merchant/products/merchant/${merchantId}?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const products = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || products.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
-        renderProducts(products);
+        
+        renderProductsTable(products);
         updateProductsPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching products:', xhr);
         let errorMsg = 'Error loading products';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
         }
-        $("#productsTableBody").html(`<tr><td colspan="7" class="text-center text-danger py-4">${errorMsg}</td></tr>`);
-        $("#productsGridBody").html(`<div class="col-12 text-center text-danger py-4">${errorMsg}</div>`);
+        $("#productsTableBody").html(`<tr><td colspan="6" class="text-center text-danger">${errorMsg}</td></tr>`);
       }
     });
-  }
-
-  function searchProducts(merchantId, searchTerm, page = 1, pageSize = 10) {
-    page = parseInt($('#productsPageNumber').val()) || page;
-    pageSize = parseInt($('#productsPageSize').val()) || pageSize;
-
-    const url = API_ENDPOINTS.products.search(searchTerm, page, pageSize);
-
-    $.ajax({
-      url: url,
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        const products = response.data || response.items || response || [];
-        const totalCount = response.totalCount || response.total || products.length;
-        const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
-        renderProducts(products);
-        updateProductsPaginationInfo(page, totalPages, totalCount);
-      },
-      error: function (xhr) {
-        console.error('Error searching products:', xhr);
-        let errorMsg = 'Error searching products';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMsg = xhr.responseJSON.message;
-        }
-        $("#productsTableBody").html(`<tr><td colspan="7" class="text-center text-danger py-4">${errorMsg}</td></tr>`);
-        $("#productsGridBody").html(`<div class="col-12 text-center text-danger py-4">${errorMsg}</div>`);
-      }
-    });
-  }
-
-  function renderProducts(products) {
-    if (!products || products.length === 0) {
-      $("#productsTableBody").html('<tr><td colspan="7" class="text-center py-4 text-muted">No products found</td></tr>');
-      $("#productsGridBody").html('<div class="col-12 text-center py-4 text-muted">No products found</div>');
-      return;
-    }
-
-    renderProductsTable(products);
-    renderProductsGrid(products);
   }
 
   function renderProductsTable(products) {
+    if (!products || products.length === 0) {
+      $("#productsTableBody").html('<tr><td colspan="6" class="text-center">No products found</td></tr>');
+      return;
+    }
+    
     let html = '';
     products.forEach(product => {
-      const productId = product.productId || product.ProductId || 'N/A';
-      const productName = product.productName || product.ProductName || 'N/A';
-      const description = (product.productDescription || product.ProductDescription || 'No description').substring(0, 100) + (product.productDescription && product.productDescription.length > 100 ? '...' : '');
-      const imageUrl = product.imageUrl || product.ImageUrl || product.imageURL || 'Icons/headphone.jpg';
-      const categoryName = product.categoryName || product.CategoryName || 'N/A';
-      const isActive = product.isActive !== false;
-
       html += `
-        <tr class="table-row-hover">
+        <tr>
+          <td>${product.productId || product.ProductId || 'N/A'}</td>
+          <td>${product.productName || product.ProductName || 'N/A'}</td>
+          <td>$${parseFloat(product.price || product.Price || 0).toFixed(2)}</td>
+          <td>${product.categoryName || product.CategoryName || 'N/A'}</td>
+          <td><span class="badge ${product.isActive !== false ? 'bg-success' : 'bg-secondary'}">${product.isActive !== false ? 'Active' : 'Inactive'}</span></td>
           <td>
-            <img src="${imageUrl}" alt="${productName}" class="product-thumbnail" 
-                 onerror="this.src='Icons/headphone.jpg'" 
-                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
-          </td>
-          <td><strong>#${productId}</strong></td>
-          <td><strong>${escapeHtml(productName)}</strong></td>
-          <td class="text-muted" style="max-width: 300px;">${escapeHtml(description)}</td>
-          <td><span class="badge bg-info">${escapeHtml(categoryName)}</span></td>
-          <td><span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">${isActive ? 'Active' : 'Inactive'}</span></td>
-          <td>
-            <div class="btn-group" role="group">
-              <button class="btn btn-sm btn-primary" onclick="MerchantApp.viewProductVariants(${productId}, '${escapeHtml(productName)}')" title="View Variants">
-                <i class="bi bi-eye"></i> Variants
-              </button>
-              <button class="btn btn-sm btn-warning" onclick="MerchantApp.editProduct(${productId})" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="MerchantApp.deleteProduct(${productId})" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
+            <button class="btn btn-sm btn-primary me-1" onclick="viewProductDetails(${product.productId || product.ProductId})" title="View Details">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-warning me-1" onclick="editProduct(${product.productId || product.ProductId})" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteProduct(${product.productId || product.ProductId})" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
           </td>
         </tr>
       `;
@@ -3718,175 +3547,115 @@ const MerchantApp = (() => {
     $("#productsTableBody").html(html);
   }
 
-  function renderProductsGrid(products) {
-    let html = '';
-    products.forEach(product => {
-      const productId = product.productId || product.ProductId || 'N/A';
-      const productName = product.productName || product.ProductName || 'N/A';
-      const description = (product.productDescription || product.ProductDescription || 'No description').substring(0, 150) + (product.productDescription && product.productDescription.length > 150 ? '...' : '');
-      const imageUrl = product.imageUrl || product.ImageUrl || product.imageURL || 'Icons/headphone.jpg';
-      const categoryName = product.categoryName || product.CategoryName || 'N/A';
-      const isActive = product.isActive !== false;
-
-      html += `
-        <div class="col-md-4 col-lg-3">
-          <div class="card product-card h-100 shadow-sm">
-            <img src="${imageUrl}" class="card-img-top product-card-image" alt="${productName}"
-                 onerror="this.src='Icons/headphone.jpg'">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title">${escapeHtml(productName)}</h5>
-              <p class="card-text text-muted small flex-grow-1">${escapeHtml(description)}</p>
-              <div class="mb-2">
-                <span class="badge bg-info me-1">${escapeHtml(categoryName)}</span>
-                <span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">${isActive ? 'Active' : 'Inactive'}</span>
-              </div>
-              <div class="btn-group w-100" role="group">
-                <button class="btn btn-sm btn-primary" onclick="MerchantApp.viewProductVariants(${productId}, '${escapeHtml(productName)}')">
-                  <i class="bi bi-eye me-1"></i>Variants
-                </button>
-                <button class="btn btn-sm btn-warning" onclick="MerchantApp.editProduct(${productId})">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="MerchantApp.deleteProduct(${productId})">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    $("#productsGridBody").html(html);
-  }
-
   function updateProductsPaginationInfo(currentPage, totalPages, totalCount) {
     $('#productsPaginationInfo').text(`Page ${currentPage} of ${totalPages} (Total: ${totalCount} products)`);
   }
 
-  // Helper function to escape HTML
-  function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
-    return text.toString().replace(/[&<>"']/g, m => map[m]);
-  }
-
-  // ==================== PRODUCT CRUD OPERATIONS ====================
-
-  // View Product Variants (ProductDetails)
-  window.viewProductVariants = function (productId, productName) {
+  window.viewProductDetails = function(productId) {
     if (!productId) {
-      showNotification('Product ID is required', 'error');
+      alert('Product ID is required');
       return;
     }
-
-    navigationState.currentView = 'productDetails';
-    navigationState.currentProductId = productId;
-    navigationState.currentProductName = productName || 'Product';
-
-    loadProductDetailsView(productId, productName);
-  };
-
-  // Edit Product
-  window.editProduct = function (productId) {
-    if (!productId) {
-      showNotification('Product ID is required', 'error');
-      return;
-    }
-
+    
     $.ajax({
-      url: API_ENDPOINTS.products.getById(productId),
+      url: `${API_BASE_URL}/merchant/products/${productId}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (product) {
-        showEditProductModal(product);
+      success: function(product) {
+        const modal = `
+          <div class="modal fade" id="productDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Product Details - ${product.productName || product.ProductName || 'N/A'}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <strong>Product ID:</strong> ${product.productId || product.ProductId || 'N/A'}<br>
+                      <strong>Name:</strong> ${product.productName || product.ProductName || 'N/A'}<br>
+                      <strong>Price:</strong> $${parseFloat(product.price || product.Price || 0).toFixed(2)}<br>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>Category:</strong> ${product.categoryName || product.CategoryName || 'N/A'}<br>
+                      <strong>Status:</strong> <span class="badge ${product.isActive !== false ? 'bg-success' : 'bg-secondary'}">${product.isActive !== false ? 'Active' : 'Inactive'}</span><br>
+                    </div>
+                  </div>
+                  ${product.description ? `<p><strong>Description:</strong> ${product.description || product.Description}</p>` : ''}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-warning" onclick="editProduct(${product.productId || product.ProductId}); bootstrap.Modal.getInstance(document.getElementById('productDetailsModal')).hide();">
+                    <i class="bi bi-pencil me-1"></i>Edit Product
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        $('body').append(modal);
+        const bsModal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
+        bsModal.show();
+        $('#productDetailsModal').on('hidden.bs.modal', function() {
+          $(this).remove();
+        });
       },
-      error: function (xhr) {
-        console.error('Error fetching product:', xhr);
-        let errorMsg = 'Error loading product';
+      error: function(xhr) {
+        console.error('Error fetching product details:', xhr);
+        let errorMsg = 'Error loading product details';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
         }
-        showNotification(errorMsg, 'error');
+        alert(errorMsg);
       }
     });
   };
 
-  // Delete Product
-  window.deleteProduct = function (productId) {
+  window.editProduct = function(productId) {
+    alert('Edit product functionality - To be implemented. Product ID: ' + productId);
+    // TODO: Implement edit product functionality
+  };
+
+  window.deleteProduct = function(productId) {
     if (!productId) {
-      showNotification('Product ID is required', 'error');
+      alert('Product ID is required');
       return;
     }
-
-    showConfirmModal(
-      'Delete Product',
-      'Are you sure you want to delete this product? This action cannot be undone.',
-      function () {
-        $.ajax({
-          url: API_ENDPOINTS.products.delete(productId),
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function (response) {
-            showNotification('Product deleted successfully!', 'success');
-            const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-            const token = authData.jwt;
-            let userId = null;
-            if (token) {
-              try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                userId = payload.sub || payload.nameid;
-              } catch (e) {
-                console.error('Error parsing token:', e);
-              }
-            }
-            if (userId) fetchProducts(userId);
-          },
-          error: function (xhr) {
-            console.error('Error deleting product:', xhr);
-            let errorMsg = 'Error deleting product';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-              errorMsg = xhr.responseJSON.message;
-            }
-            showNotification(errorMsg, 'error');
-          }
-        });
-      }
-    );
-  };
-
-  // Expose functions to global scope for onclick handlers
-  window.MerchantApp = {
-    viewProductVariants: window.viewProductVariants,
-    editProduct: window.editProduct,
-    deleteProduct: window.deleteProduct,
-    viewInventory: function (productDetailId, productDetailName) {
-      return viewInventory(productDetailId, productDetailName);
-    },
-    editProductDetail: function (detailId) {
-      return editProductDetail(detailId);
-    },
-    deleteProductDetail: function (detailId) {
-      return deleteProductDetail(detailId);
-    },
-    addInventoryItem: function (productDetailId) {
-      return showAddInventoryModal(productDetailId);
-    },
-    deleteInventoryItem: function (inventoryId, productDetailId) {
-      return deleteInventoryItem(inventoryId, productDetailId);
-    },
-    showEditInventoryModal: function (productDetailId) {
-      return showEditInventoryModal(productDetailId);
+    
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
     }
+    
+    $.ajax({
+      url: `${API_BASE_URL}/merchant/products/${productId}`,
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
+      success: function(response) {
+        alert('Product deleted successfully!');
+        const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
+        const token = authData.jwt;
+        let userId = null;
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userId = payload.sub || payload.nameid;
+          } catch(e) {
+            console.error('Error parsing token:', e);
+          }
+        }
+        if (userId) fetchProducts(userId);
+      },
+      error: function(xhr) {
+        console.error('Error deleting product:', xhr);
+        let errorMsg = 'Error deleting product';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        alert(errorMsg);
+      }
+    });
   };
-
-  // Expose showEditInventoryModal globally for onclick handlers
-  window.showEditInventoryModal = showEditInventoryModal;
 
   // ==================== ORDERS SECTION ====================
   function loadOrders() {
@@ -3946,7 +3715,7 @@ const MerchantApp = (() => {
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
+    
     // Get store ID from token or user data
     const storeId = getStoreId();
     if (storeId) {
@@ -3954,19 +3723,19 @@ const MerchantApp = (() => {
     } else {
       $("#ordersTableBody").html('<tr><td colspan="6" class="text-center text-danger">Store ID not found. Please check your authentication.</td></tr>');
     }
-
+    
     // Event handlers
-    $(document).off('click', '#btnRefreshOrders').on('click', '#btnRefreshOrders', function () {
+    $(document).off('click', '#btnRefreshOrders').on('click', '#btnRefreshOrders', function() {
       const storeId = getStoreId();
       if (storeId) fetchOrders(storeId);
     });
-
-    $(document).off('change', '#orderStatusFilter').on('change', '#orderStatusFilter', function () {
+    
+    $(document).off('change', '#orderStatusFilter').on('change', '#orderStatusFilter', function() {
       const storeId = getStoreId();
       if (storeId) fetchOrders(storeId);
     });
-
-    $(document).off('change', '#orderPageNumber, #orderPageSize').on('change', '#orderPageNumber, #orderPageSize', function () {
+    
+    $(document).off('change', '#orderPageNumber, #orderPageSize').on('change', '#orderPageNumber, #orderPageSize', function() {
       const storeId = getStoreId();
       if (storeId) fetchOrders(storeId);
     });
@@ -3977,13 +3746,13 @@ const MerchantApp = (() => {
     const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
     const token = authData.jwt;
     if (!token) return null;
-
+    
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       // Try to get storeId from token claims or use a default/fallback
       // You may need to adjust this based on your token structure
       return payload.storeId || payload.StoreId || 1; // Fallback to 1 if not found
-    } catch (e) {
+    } catch(e) {
       console.error('Error parsing token:', e);
       return 1; // Fallback
     }
@@ -3993,28 +3762,28 @@ const MerchantApp = (() => {
     const statusFilter = $('#orderStatusFilter').val();
     page = parseInt($('#orderPageNumber').val()) || page;
     pageSize = parseInt($('#orderPageSize').val()) || pageSize;
-
+    
     let url = `${API_BASE_URL}/merchant/orders/store/${storeId}?page=${page}&pageSize=${pageSize}`;
-
+    
     // If status filter is selected, use filter endpoint
     if (statusFilter) {
       url = `${API_BASE_URL}/merchant/orders/filter?storeId=${storeId}&status=${statusFilter}&page=${page}&pageSize=${pageSize}`;
     }
-
+    
     $.ajax({
       url: url,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         // Handle both direct array and paged result
         const orders = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || orders.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderOrdersTable(orders);
         updateOrderPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching orders:', xhr);
         let errorMsg = 'Error loading orders';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4030,13 +3799,13 @@ const MerchantApp = (() => {
       $("#ordersTableBody").html('<tr><td colspan="6" class="text-center">No orders found</td></tr>');
       return;
     }
-
+    
     let html = '';
     orders.forEach(order => {
       const status = getOrderStatusText(order.statusId || order.status || 'Pending');
       const statusClass = getOrderStatusClass(status);
       const canAllow = status.toLowerCase() === 'pending' || status.toLowerCase() === 'processing';
-
+      
       html += `
         <tr>
           <td>${order.orderId || order.OrderId || 'N/A'}</td>
@@ -4090,7 +3859,7 @@ const MerchantApp = (() => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    } catch (e) {
+    } catch(e) {
       return dateString;
     }
   }
@@ -4100,29 +3869,29 @@ const MerchantApp = (() => {
   }
 
   // Allow/Approve Order Function
-  window.allowOrder = function (orderId) {
+  window.allowOrder = function(orderId) {
     if (!orderId) {
       alert('Order ID is required');
       return;
     }
-
+    
     if (!confirm('Are you sure you want to approve/allow this order?')) {
       return;
     }
-
+    
     updateOrderStatusTo(orderId, 'Approved');
   };
 
   // Update Order Status Function
-  window.updateOrderStatus = function (orderId) {
+  window.updateOrderStatus = function(orderId) {
     if (!orderId) {
       alert('Order ID is required');
       return;
     }
-
+    
     const statusOptions = ['Pending', 'Approved', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
     const currentStatus = prompt('Enter new status:\n' + statusOptions.join(', '));
-
+    
     if (currentStatus && statusOptions.includes(currentStatus)) {
       updateOrderStatusTo(orderId, currentStatus);
     } else if (currentStatus) {
@@ -4137,13 +3906,13 @@ const MerchantApp = (() => {
       contentType: 'application/json',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
       data: JSON.stringify({ status: status }),
-      success: function (response) {
+      success: function(response) {
         alert('Order status updated successfully!');
         // Refresh orders list
         const storeId = getStoreId();
         if (storeId) fetchOrders(storeId);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error updating order status:', xhr);
         let errorMsg = 'Error updating order status';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4155,20 +3924,20 @@ const MerchantApp = (() => {
   }
 
   // View Order Details Function
-  window.viewOrderDetails = function (orderId) {
+  window.viewOrderDetails = function(orderId) {
     if (!orderId) {
       alert('Order ID is required');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/orders/${orderId}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (order) {
+      success: function(order) {
         showOrderDetailsModal(order);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching order details:', xhr);
         let errorMsg = 'Error loading order details';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4241,7 +4010,7 @@ const MerchantApp = (() => {
     $('body').append(modal);
     const bsModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
     bsModal.show();
-    $('#orderDetailsModal').on('hidden.bs.modal', function () {
+    $('#orderDetailsModal').on('hidden.bs.modal', function() {
       $(this).remove();
     });
   }
@@ -4299,25 +4068,25 @@ const MerchantApp = (() => {
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
+    
     const storeId = getStoreId();
     if (storeId) {
       fetchInventory(storeId);
     } else {
       $("#inventoryTableBody").html('<tr><td colspan="7" class="text-center text-danger">Store ID not found</td></tr>');
     }
-
-    $(document).off('click', '#btnRefreshInventory').on('click', '#btnRefreshInventory', function () {
+    
+    $(document).off('click', '#btnRefreshInventory').on('click', '#btnRefreshInventory', function() {
       const storeId = getStoreId();
       if (storeId) fetchInventory(storeId);
     });
-
-    $(document).off('click', '#btnLowStockAlerts').on('click', '#btnLowStockAlerts', function () {
+    
+    $(document).off('click', '#btnLowStockAlerts').on('click', '#btnLowStockAlerts', function() {
       const storeId = getStoreId();
       if (storeId) fetchLowStockAlerts(storeId);
     });
-
-    $(document).off('change', '#inventoryPageNumber, #inventoryPageSize').on('change', '#inventoryPageNumber, #inventoryPageSize', function () {
+    
+    $(document).off('change', '#inventoryPageNumber, #inventoryPageSize').on('change', '#inventoryPageNumber, #inventoryPageSize', function() {
       const storeId = getStoreId();
       if (storeId) fetchInventory(storeId);
     });
@@ -4326,20 +4095,20 @@ const MerchantApp = (() => {
   function fetchInventory(storeId, page = 1, pageSize = 10) {
     page = parseInt($('#inventoryPageNumber').val()) || page;
     pageSize = parseInt($('#inventoryPageSize').val()) || pageSize;
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/inventory/store/${storeId}?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const inventory = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || inventory.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderInventoryTable(inventory);
         updateInventoryPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching inventory:', xhr);
         let errorMsg = 'Error loading inventory';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4353,20 +4122,20 @@ const MerchantApp = (() => {
   function fetchLowStockAlerts(storeId, page = 1, pageSize = 10) {
     page = parseInt($('#inventoryPageNumber').val()) || page;
     pageSize = parseInt($('#inventoryPageSize').val()) || pageSize;
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/inventory/store/${storeId}/low-stock?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const inventory = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || inventory.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderInventoryTable(inventory);
         updateInventoryPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching low stock alerts:', xhr);
         let errorMsg = 'Error loading low stock alerts';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4382,13 +4151,13 @@ const MerchantApp = (() => {
       $("#inventoryTableBody").html('<tr><td colspan="7" class="text-center">No inventory items found</td></tr>');
       return;
     }
-
+    
     let html = '';
     inventory.forEach(item => {
       const isLowStock = item.quantityAvailable <= item.reorderLevel;
       const statusClass = isLowStock ? 'bg-danger' : 'bg-success';
       const statusText = isLowStock ? 'Low Stock' : 'In Stock';
-
+      
       html += `
         <tr>
           <td>${item.inventoryId || item.InventoryId || 'N/A'}</td>
@@ -4415,33 +4184,33 @@ const MerchantApp = (() => {
     $('#inventoryPaginationInfo').text(`Page ${currentPage} of ${totalPages} (Total: ${totalCount} items)`);
   }
 
-  window.updateStockQuantity = function (productDetailId) {
+  window.updateStockQuantity = function(productDetailId) {
     if (!productDetailId) {
       alert('Product Detail ID is required');
       return;
     }
-
+    
     const newQuantity = prompt('Enter new stock quantity:');
     if (newQuantity === null) return;
-
+    
     const quantity = parseInt(newQuantity);
     if (isNaN(quantity) || quantity < 0) {
       alert('Please enter a valid positive number');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/inventory/product-detail/${productDetailId}/stock`,
       method: 'PUT',
       contentType: 'application/json',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
       data: JSON.stringify({ newQuantity: quantity }),
-      success: function (response) {
+      success: function(response) {
         alert('Stock quantity updated successfully!');
         const storeId = getStoreId();
         if (storeId) fetchInventory(storeId);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error updating stock:', xhr);
         let errorMsg = 'Error updating stock quantity';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4452,17 +4221,17 @@ const MerchantApp = (() => {
     });
   };
 
-  window.viewInventoryDetails = function (productDetailId) {
+  window.viewInventoryDetails = function(productDetailId) {
     if (!productDetailId) {
       alert('Product Detail ID is required');
       return;
     }
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/inventory/product-detail/${productDetailId}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (inventory) {
+      success: function(inventory) {
         const modal = `
           <div class="modal fade" id="inventoryDetailsModal" tabindex="-1">
             <div class="modal-dialog">
@@ -4491,11 +4260,11 @@ const MerchantApp = (() => {
         $('body').append(modal);
         const bsModal = new bootstrap.Modal(document.getElementById('inventoryDetailsModal'));
         bsModal.show();
-        $('#inventoryDetailsModal').on('hidden.bs.modal', function () {
+        $('#inventoryDetailsModal').on('hidden.bs.modal', function() {
           $(this).remove();
         });
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching inventory details:', xhr);
         let errorMsg = 'Error loading inventory details';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4587,7 +4356,7 @@ const MerchantApp = (() => {
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
+    
     const storeId = getStoreId();
     if (storeId) {
       fetchTransactions(storeId);
@@ -4595,21 +4364,21 @@ const MerchantApp = (() => {
     } else {
       $("#transactionsTableBody").html('<tr><td colspan="6" class="text-center text-danger">Store ID not found</td></tr>');
     }
-
-    $(document).off('click', '#btnRefreshTransactions').on('click', '#btnRefreshTransactions', function () {
+    
+    $(document).off('click', '#btnRefreshTransactions').on('click', '#btnRefreshTransactions', function() {
       const storeId = getStoreId();
       if (storeId) {
         fetchTransactions(storeId);
         fetchTransactionSummary(storeId);
       }
     });
-
-    $(document).off('change', '#transactionPeriod').on('change', '#transactionPeriod', function () {
+    
+    $(document).off('change', '#transactionPeriod').on('change', '#transactionPeriod', function() {
       const storeId = getStoreId();
       if (storeId) fetchTransactionSummary(storeId);
     });
-
-    $(document).off('change', '#transactionPageNumber, #transactionPageSize').on('change', '#transactionPageNumber, #transactionPageSize', function () {
+    
+    $(document).off('change', '#transactionPageNumber, #transactionPageSize').on('change', '#transactionPageNumber, #transactionPageSize', function() {
       const storeId = getStoreId();
       if (storeId) fetchTransactions(storeId);
     });
@@ -4618,20 +4387,20 @@ const MerchantApp = (() => {
   function fetchTransactions(storeId, page = 1, pageSize = 10) {
     page = parseInt($('#transactionPageNumber').val()) || page;
     pageSize = parseInt($('#transactionPageSize').val()) || pageSize;
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/transactions/store/${storeId}?page=${page}&pageSize=${pageSize}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
+      success: function(response) {
         const transactions = response.data || response.items || response || [];
         const totalCount = response.totalCount || response.total || transactions.length;
         const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-
+        
         renderTransactionsTable(transactions);
         updateTransactionPaginationInfo(page, totalPages, totalCount);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching transactions:', xhr);
         let errorMsg = 'Error loading transactions';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4644,17 +4413,17 @@ const MerchantApp = (() => {
 
   function fetchTransactionSummary(storeId) {
     const period = $('#transactionPeriod').val() || 'monthly';
-
+    
     $.ajax({
       url: `${API_BASE_URL}/merchant/transactions/store/${storeId}/summary?period=${period}`,
       method: 'GET',
       headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (summary) {
+      success: function(summary) {
         $("#totalRevenueSummary").text("$" + parseFloat(summary.totalAmount || summary.totalRevenue || 0).toFixed(2));
         $("#successfulTransactions").text(summary.successfulCount || summary.successfulTransactions || 0);
         $("#failedTransactions").text(summary.failedCount || summary.failedTransactions || 0);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching transaction summary:', xhr);
         $("#totalRevenueSummary").text("$0");
         $("#successfulTransactions").text("0");
@@ -4668,12 +4437,12 @@ const MerchantApp = (() => {
       $("#transactionsTableBody").html('<tr><td colspan="6" class="text-center">No transactions found</td></tr>');
       return;
     }
-
+    
     let html = '';
     transactions.forEach(transaction => {
       const statusClass = transaction.isSuccessful || transaction.IsSuccessful ? 'bg-success' : 'bg-danger';
       const statusText = transaction.isSuccessful || transaction.IsSuccessful ? 'Success' : 'Failed';
-
+      
       html += `
         <tr>
           <td>${transaction.transactionId || transaction.TransactionId || 'N/A'}</td>
@@ -4836,18 +4605,18 @@ const MerchantApp = (() => {
       </div>
     `;
     $("#dynamicContentContainer").show().html(html);
-
+    
     fetchAttributes();
     fetchMeasures();
     loadAttributesForSelect();
-
+    
     // Bind event handlers
     $(document).off('click', '#btnAddAttribute').on('click', '#btnAddAttribute', showAddAttributeModal);
     $(document).off('click', '#btnAddMeasure').on('click', '#btnAddMeasure', showAddMeasureModal);
     $(document).off('click', '#btnAddMeasureByAttribute').on('click', '#btnAddMeasureByAttribute', showAddMeasureByAttributeModal);
     $(document).off('click', '#btnRefreshAttributes').on('click', '#btnRefreshAttributes', fetchAttributes);
     $(document).off('click', '#btnRefreshMeasures').on('click', '#btnRefreshMeasures', fetchMeasures);
-    $(document).off('click', '#btnRefreshMeasuresByAttribute').on('click', '#btnRefreshMeasuresByAttribute', function () {
+    $(document).off('click', '#btnRefreshMeasuresByAttribute').on('click', '#btnRefreshMeasuresByAttribute', function() {
       const attributeName = $('#attributeSelectForMeasure').val();
       console.log('btnRefreshMeasuresByAttribute clicked, selected attribute:', attributeName);
       if (attributeName && attributeName.trim() !== '') {
@@ -4857,7 +4626,7 @@ const MerchantApp = (() => {
         $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-warning">Please select an attribute first</td></tr>');
       }
     });
-    $(document).off('change', '#attributeSelectForMeasure').on('change', '#attributeSelectForMeasure', function () {
+    $(document).off('change', '#attributeSelectForMeasure').on('change', '#attributeSelectForMeasure', function() {
       const attributeName = $(this).val();
       console.log('attributeSelectForMeasure changed, selected attribute:', attributeName);
       if (attributeName && attributeName.trim() !== '') {
@@ -4866,10 +4635,10 @@ const MerchantApp = (() => {
         $('#measuresByAttributeTableBody').html('<tr><td colspan="3" class="text-center text-muted">Select an attribute to view measures</td></tr>');
       }
     });
-    $(document).off('input', '#attributeSearch').on('input', '#attributeSearch', function () {
+    $(document).off('input', '#attributeSearch').on('input', '#attributeSearch', function() {
       filterAttributes($(this).val());
     });
-    $(document).off('input', '#measureSearch').on('input', '#measureSearch', function () {
+    $(document).off('input', '#measureSearch').on('input', '#measureSearch', function() {
       filterMeasures($(this).val());
     });
   }
@@ -4888,11 +4657,11 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         const attributes = Array.isArray(response) ? response : [];
         renderAttributesTable(attributes);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching attributes:', xhr);
         let errorMsg = 'Error loading attributes';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4917,11 +4686,11 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         const measures = Array.isArray(response) ? response : [];
         renderMeasuresTable(measures);
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error fetching measures:', xhr);
         let errorMsg = 'Error loading measures';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -4931,7 +4700,6 @@ const MerchantApp = (() => {
       }
     });
   }
-
 
   function fetchMeasuresByAttribute(attributeName) {
     // Validate input
@@ -4948,45 +4716,10 @@ const MerchantApp = (() => {
       return;
     }
 
-    // Get attributeId from cache or look it up
-    let attributeId = attributeNameToIdMap[attributeName];
-
-    if (!attributeId) {
-      // If not in cache, we need to look it up
-      console.log('fetchMeasuresByAttribute: Looking up attribute ID for:', attributeName);
-      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Looking up attribute ID...</td></tr>');
-
-      lookupAttributeIdByName(attributeName, function (foundId) {
-        if (foundId) {
-          // Cache it and make the request
-          attributeNameToIdMap[attributeName] = foundId;
-          // Recursively call with the found ID
-          fetchMeasuresByAttributeWithId(attributeName, foundId);
-        } else {
-          $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Could not find attribute ID. Please try again.</td></tr>');
-        }
-      });
-      return;
-    }
-
-    // Use the cached ID
-    fetchMeasuresByAttributeWithId(attributeName, attributeId);
-  }
-
-  // Internal function to actually fetch measures using attributeId
-  function fetchMeasuresByAttributeWithId(attributeName, attributeId) {
-
-    const token = getAuthToken();
-    if (!token) {
-      console.error('fetchMeasuresByAttributeWithId: No authentication token found');
-      $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center text-danger">Authentication required</td></tr>');
-      return;
-    }
-
-    // Construct URL with attributeId
-    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${attributeId}/measures`;
-    console.log('fetchMeasuresByAttributeWithId: Calling API:', url);
-    console.log('fetchMeasuresByAttributeWithId: Attribute ID:', attributeId, 'Attribute name:', attributeName);
+    // Construct URL
+    const url = `${API_BASE_URL}/merchant/attributes-measures/attributes/${encodeURIComponent(attributeName.trim())}/measures`;
+    console.log('fetchMeasuresByAttribute: Calling API:', url);
+    console.log('fetchMeasuresByAttribute: Attribute name:', attributeName);
 
     // Show loading state
     $("#measuresByAttributeTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat me-2"></i>Loading measures...</td></tr>');
@@ -4998,9 +4731,9 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         console.log('fetchMeasuresByAttribute: Success response:', response);
-
+        
         // Handle response - could be array or object with data property
         let measures = [];
         if (Array.isArray(response)) {
@@ -5010,11 +4743,11 @@ const MerchantApp = (() => {
         } else if (response && response.data) {
           measures = [response.data];
         }
-
+        
         console.log('fetchMeasuresByAttribute: Parsed measures:', measures);
         renderMeasuresByAttributeTable(measures, attributeName);
       },
-      error: function (xhr, status, error) {
+      error: function(xhr, status, error) {
         console.error('fetchMeasuresByAttribute: AJAX Error Details:');
         console.error('  - Status:', xhr.status);
         console.error('  - Status Text:', xhr.statusText);
@@ -5022,17 +4755,17 @@ const MerchantApp = (() => {
         console.error('  - Response Text:', xhr.responseText);
         console.error('  - Response JSON:', xhr.responseJSON);
         console.error('  - Full XHR object:', xhr);
-
+        
         let errorMsg = 'Error loading measures';
-
+        
         if (xhr.status === 0) {
           errorMsg = 'Network error. Please check your connection and CORS settings.';
         } else if (xhr.status === 401) {
           errorMsg = 'Authentication failed. Please login again.';
         } else if (xhr.status === 404) {
-          errorMsg = `Attribute with ID ${attributeId} not found.`;
+          errorMsg = `Attribute "${attributeName}" not found.`;
         } else if (xhr.status === 400) {
-          errorMsg = 'Invalid request. Please check the attribute ID.';
+          errorMsg = 'Invalid request. Please check the attribute name.';
         } else if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMsg = xhr.responseJSON.message;
         } else if (xhr.responseText) {
@@ -5045,101 +4778,10 @@ const MerchantApp = (() => {
         } else {
           errorMsg = `Error (${xhr.status}): ${xhr.statusText || error}`;
         }
-
+        
         $("#measuresByAttributeTableBody").html(`<tr><td colspan="3" class="text-center text-danger">${errorMsg}</td></tr>`);
       }
     });
-  }
-
-  // Helper function to look up attribute ID from name by trying IDs sequentially
-  // FIXED: Now stops after finding first valid ID to prevent hundreds of 404 errors
-  function lookupAttributeIdByName(attributeName, callback) {
-    if (!attributeName || attributeName.trim() === '') {
-      callback(null);
-      return;
-    }
-
-    // Check cache first
-    if (attributeNameToIdMap[attributeName]) {
-      callback(attributeNameToIdMap[attributeName]);
-      return;
-    }
-
-    const token = getAuthToken();
-    if (!token) {
-      console.error('lookupAttributeIdByName: No authentication token');
-      callback(null);
-      return;
-    }
-
-    // Try IDs sequentially starting from 1, but STOP after finding first valid ID
-    let currentId = 1;
-    const maxAttempts = 100; // Reduced limit to prevent excessive 404s
-    let attempts = 0;
-    let isStopped = false; // Flag to prevent multiple callbacks
-
-    function tryNextId() {
-      // Stop if we already found an ID or exceeded max attempts
-      if (isStopped || attempts >= maxAttempts) {
-        if (!isStopped) {
-          console.warn('lookupAttributeIdByName: Max attempts reached without finding valid ID');
-          callback(null);
-        }
-        return;
-      }
-
-      attempts++;
-      const testUrl = `${API_BASE_URL}/merchant/attributes-measures/attributes/${currentId}/measures`;
-
-      $.ajax({
-        url: testUrl,
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        success: function (response) {
-          // FIXED: Stop immediately after finding first valid ID
-          // Cache it and return - don't continue trying more IDs
-          if (!isStopped) {
-            isStopped = true;
-            attributeNameToIdMap[attributeName] = currentId;
-            console.log('lookupAttributeIdByName: Found attribute ID', currentId, 'for', attributeName);
-            callback(currentId);
-          }
-        },
-        error: function (xhr) {
-          if (isStopped) {
-            return; // Already found an ID, ignore this error
-          }
-
-          if (xhr.status === 404) {
-            // Attribute not found, try next ID
-            currentId++;
-            tryNextId();
-          } else if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) {
-            // Check if it's an invalid ID error
-            if (xhr.responseJSON.message.includes('Invalid attribute ID')) {
-              currentId++;
-              tryNextId();
-            } else {
-              // Other 400 error - might be valid ID, use it
-              isStopped = true;
-              attributeNameToIdMap[attributeName] = currentId;
-              console.log('lookupAttributeIdByName: Using attribute ID', currentId, 'for', attributeName);
-              callback(currentId);
-            }
-          } else {
-            // Other error (401, 500, etc.) - don't use this ID, try next
-            currentId++;
-            tryNextId();
-          }
-        }
-      });
-    }
-
-    // Start trying IDs
-    tryNextId();
   }
 
   function loadAttributesForSelect() {
@@ -5158,9 +4800,9 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         console.log('loadAttributesForSelect: Success response:', response);
-
+        
         // Handle response - could be array or object with data property
         let attributes = [];
         if (Array.isArray(response)) {
@@ -5168,35 +4810,28 @@ const MerchantApp = (() => {
         } else if (response && Array.isArray(response.data)) {
           attributes = response.data;
         }
-
+        
         console.log('loadAttributesForSelect: Parsed attributes:', attributes);
-
+        
         const $select = $('#attributeSelectForMeasure');
         if ($select.length === 0) {
           console.error('loadAttributesForSelect: Select element #attributeSelectForMeasure not found');
           return;
         }
-
+        
         // Clear existing options except the first one
         $select.find('option:not(:first)').remove();
-
-        // Clear the cache
-        attributeNameToIdMap = {};
-
+        
         // Add attributes to dropdown
-        // Store attribute name in value - ID will be looked up and cached when selected
-        attributes.forEach((attr, index) => {
+        attributes.forEach(attr => {
           const attrName = typeof attr === 'string' ? attr : (attr.name || attr.Name || attr);
           const escapedAttr = String(attrName).replace(/"/g, '&quot;');
           $select.append(`<option value="${escapedAttr}">${attrName}</option>`);
         });
-
-        // Note: Attribute ID mapping will be built on-demand when attributes are selected
-        // This prevents hundreds of 404 errors from sequential lookups
-
+        
         console.log('loadAttributesForSelect: Loaded', attributes.length, 'attributes into dropdown');
       },
-      error: function (xhr, status, error) {
+      error: function(xhr, status, error) {
         console.error('loadAttributesForSelect: Error loading attributes:');
         console.error('  - Status:', xhr.status);
         console.error('  - Status Text:', xhr.statusText);
@@ -5231,9 +4866,9 @@ const MerchantApp = (() => {
       `;
     });
     $tbody.html(html);
-
+    
     // Bind click handlers using event delegation
-    $tbody.off('click', '.check-attribute-btn').on('click', '.check-attribute-btn', function () {
+    $tbody.off('click', '.check-attribute-btn').on('click', '.check-attribute-btn', function() {
       const attrName = $(this).data('attribute');
       checkAttribute(attrName);
     });
@@ -5263,9 +4898,9 @@ const MerchantApp = (() => {
       `;
     });
     $tbody.html(html);
-
+    
     // Bind click handlers using event delegation
-    $tbody.off('click', '.check-measure-btn').on('click', '.check-measure-btn', function () {
+    $tbody.off('click', '.check-measure-btn').on('click', '.check-measure-btn', function() {
       const measureName = $(this).data('measure');
       checkMeasure(measureName);
     });
@@ -5273,12 +4908,12 @@ const MerchantApp = (() => {
 
   function renderMeasuresByAttributeTable(measures, attributeName) {
     const $tbody = $('#measuresByAttributeTableBody');
-
+    
     console.log('renderMeasuresByAttributeTable: Rendering measures:', measures);
     console.log('renderMeasuresByAttributeTable: Attribute name:', attributeName);
-
+    
     if (!measures || measures.length === 0) {
-      const message = attributeName
+      const message = attributeName 
         ? `No measures found for attribute "${attributeName}". Measures will appear here once they are used in products with this attribute.`
         : 'No measures found for this attribute';
       $tbody.html(`<tr><td colspan="3" class="text-center text-muted">${message}</td></tr>`);
@@ -5290,7 +4925,7 @@ const MerchantApp = (() => {
       // Handle if measure is an object with a Name property, or just a string
       const measureName = typeof measure === 'string' ? measure : (measure.name || measure.Name || measure);
       const escapedMeasure = String(measureName).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+      
       html += `
         <tr>
           <td>${index + 1}</td>
@@ -5310,7 +4945,7 @@ const MerchantApp = (() => {
       return;
     }
     const term = searchTerm.toLowerCase();
-    $rows.each(function () {
+    $rows.each(function() {
       const text = $(this).text().toLowerCase();
       $(this).toggle(text.includes(term));
     });
@@ -5323,7 +4958,7 @@ const MerchantApp = (() => {
       return;
     }
     const term = searchTerm.toLowerCase();
-    $rows.each(function () {
+    $rows.each(function() {
       const text = $(this).text().toLowerCase();
       $(this).toggle(text.includes(term));
     });
@@ -5352,13 +4987,13 @@ const MerchantApp = (() => {
         </div>
       </div>
     `;
-
+    
     $('#addAttributeModal').remove();
     $('body').append(modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('addAttributeModal'));
     modal.show();
-
-    $('#btnConfirmAddAttribute').off('click').on('click', function () {
+    
+    $('#btnConfirmAddAttribute').off('click').on('click', function() {
       const name = $('#newAttributeName').val().trim();
       if (!name) {
         showNotification('Attribute name is required', 'error');
@@ -5392,13 +5027,13 @@ const MerchantApp = (() => {
         </div>
       </div>
     `;
-
+    
     $('#addMeasureModal').remove();
     $('body').append(modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('addMeasureModal'));
     modal.show();
-
-    $('#btnConfirmAddMeasure').off('click').on('click', function () {
+    
+    $('#btnConfirmAddMeasure').off('click').on('click', function() {
       const name = $('#newMeasureName').val().trim();
       if (!name) {
         showNotification('Measure name is required', 'error');
@@ -5438,10 +5073,10 @@ const MerchantApp = (() => {
         </div>
       </div>
     `;
-
+    
     $('#addMeasureByAttributeModal').remove();
     $('body').append(modalHtml);
-
+    
     // Load attributes into modal select
     const token = getAuthToken();
     if (token) {
@@ -5452,7 +5087,7 @@ const MerchantApp = (() => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        success: function (response) {
+        success: function(response) {
           const attributes = Array.isArray(response) ? response : [];
           const $select = $('#modalAttributeSelect');
           attributes.forEach(attr => {
@@ -5461,11 +5096,11 @@ const MerchantApp = (() => {
         }
       });
     }
-
+    
     const modal = new bootstrap.Modal(document.getElementById('addMeasureByAttributeModal'));
     modal.show();
-
-    $('#btnConfirmAddMeasureByAttribute').off('click').on('click', function () {
+    
+    $('#btnConfirmAddMeasureByAttribute').off('click').on('click', function() {
       const attributeName = $('#modalAttributeSelect').val();
       const measureName = $('#modalMeasureName').val().trim();
       if (!attributeName || !measureName) {
@@ -5492,12 +5127,12 @@ const MerchantApp = (() => {
         'Content-Type': 'application/json'
       },
       data: JSON.stringify({ Name: name }),
-      success: function (response) {
+      success: function(response) {
         showNotification('Attribute added successfully ✅', 'success');
         fetchAttributes();
         loadAttributesForSelect();
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error adding attribute:', xhr);
         let errorMsg = 'Failed to add attribute';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -5523,11 +5158,11 @@ const MerchantApp = (() => {
         'Content-Type': 'application/json'
       },
       data: JSON.stringify({ Name: name }),
-      success: function (response) {
+      success: function(response) {
         showNotification('Measure added successfully ✅', 'success');
         fetchMeasures();
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error adding measure:', xhr);
         let errorMsg = 'Failed to add measure';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -5553,12 +5188,12 @@ const MerchantApp = (() => {
         'Content-Type': 'application/json'
       },
       data: JSON.stringify({ name: measureName }),
-      success: function (response) {
+      success: function(response) {
         showNotification('Measure added to attribute successfully ✅', 'success');
         fetchMeasuresByAttribute(attributeName);
         fetchMeasures();
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error adding measure by attribute:', xhr);
         let errorMsg = 'Failed to add measure to attribute';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -5583,11 +5218,11 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         const exists = response.exists;
         showNotification(`Attribute "${name}" ${exists ? 'exists' : 'does not exist'}`, exists ? 'success' : 'info');
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error checking attribute:', xhr);
         showNotification('Error checking attribute', 'error');
       }
@@ -5608,11 +5243,11 @@ const MerchantApp = (() => {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      success: function (response) {
+      success: function(response) {
         const exists = response.exists;
         showNotification(`Measure "${name}" ${exists ? 'exists' : 'does not exist'}`, exists ? 'success' : 'info');
       },
-      error: function (xhr) {
+      error: function(xhr) {
         console.error('Error checking measure:', xhr);
         showNotification('Error checking measure', 'error');
       }
@@ -5623,1735 +5258,16 @@ const MerchantApp = (() => {
   window.checkAttribute = checkAttribute;
   window.checkMeasure = checkMeasure;
 
-  // ==================== PRODUCT DETAILS (VARIANTS) VIEW ====================
-  function loadProductDetailsView(productId, productName) {
-    const html = `
-      <div class="section-container">
-        <!-- Breadcrumb Navigation -->
-        <nav aria-label="breadcrumb" class="mb-3">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#" onclick="MerchantApp.showSection('Products'); return false;"><i class="bi bi-box-seam me-1"></i>Products</a></li>
-            <li class="breadcrumb-item active">${escapeHtml(productName || 'Product')} - Variants</li>
-          </ol>
-        </nav>
-        
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 class="section-title mb-1"><i class="bi bi-layers me-2"></i>Product Variants</h2>
-            <p class="text-muted mb-0">${escapeHtml(productName || 'Product')} - Manage product variants and configurations</p>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-secondary" onclick="MerchantApp.showSection('Products');">
-              <i class="bi bi-arrow-left me-2"></i>Back to Products
-            </button>
-            <button class="btn btn-success" id="btnAddProductDetail">
-              <i class="bi bi-plus-circle me-2"></i>Add Variant
-            </button>
-            <button class="btn btn-primary" id="btnRefreshProductDetails">
-              <i class="bi bi-arrow-clockwise me-2"></i>Refresh
-            </button>
-          </div>
-        </div>
-        
-        <!-- Product Details Table -->
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="productDetailsTable">
-                <thead>
-                  <tr>
-                    <th>Variant ID</th>
-                    <th>Storage</th>
-                    <th>RAM</th>
-                    <th>Processor</th>
-                    <th>Measure Unit</th>
-                    <th>Attributes</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th style="width: 250px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="productDetailsTableBody">
-                  <tr><td colspan="9" class="text-center py-4"><i class="bi bi-arrow-repeat spin me-2"></i>Loading variants...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div id="productDetailsEmpty" class="text-center py-5" style="display: none;">
-              <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-              <p class="text-muted mt-3">No variants found for this product.</p>
-              <button class="btn btn-success" onclick="$('#btnAddProductDetail').click();">
-                <i class="bi bi-plus-circle me-2"></i>Add First Variant
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    $("#dynamicContentContainer").show().html(html);
-
-    // Fetch product details
-    fetchProductDetails(productId);
-
-    // Bind event handlers
-    $(document).off('click', '#btnRefreshProductDetails').on('click', '#btnRefreshProductDetails', function () {
-      fetchProductDetails(productId);
-    });
-
-    $(document).off('click', '#btnAddProductDetail').on('click', '#btnAddProductDetail', function () {
-      showAddProductDetailModal(productId);
-    });
-  }
-
-  function fetchProductDetails(productId) {
-    // Note: The backend may not have a direct endpoint for this
-    // We'll try to get product by ID first, then fetch details
-    // If endpoint doesn't exist, we'll need to adapt
-    $.ajax({
-      url: API_ENDPOINTS.products.getById(productId),
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (product) {
-        // Try to get product details - may need to check if product has details property
-        const details = product.productDetails || product.ProductDetails || product.details || [];
-        renderProductDetailsTable(details, productId);
-      },
-      error: function (xhr) {
-        console.error('Error fetching product details:', xhr);
-        // If product endpoint fails, try alternative approach
-        // For now, show empty state
-        $("#productDetailsTableBody").html('<tr><td colspan="9" class="text-center text-danger py-4">Error loading variants. Please try again.</td></tr>');
-        $("#productDetailsEmpty").show();
-      }
-    });
-  }
-
-  function renderProductDetailsTable(details, productId) {
-    if (!details || details.length === 0) {
-      $("#productDetailsTableBody").html('');
-      $("#productDetailsTable").hide();
-      $("#productDetailsEmpty").show();
-      return;
-    }
-
-    $("#productDetailsTable").show();
-    $("#productDetailsEmpty").hide();
-
-    let html = '';
-    details.forEach((detail, index) => {
-      const detailId = detail.productDetailId || detail.ProductDetailId || detail.id || index;
-      const storage = detail.storage || detail.Storage || 'N/A';
-      const ram = detail.ram || detail.RAM || 'N/A';
-      const processor = detail.processor || detail.Processor || 'N/A';
-      const measureUnit = detail.measureUnit || detail.MeasureUnit || 'piece';
-      const price = parseFloat(detail.price || detail.Price || 0).toFixed(2);
-      const quantity = detail.quantityAvailable || detail.QuantityAvailable || 0;
-
-      // Format attributes
-      let attributesHtml = 'None';
-      if (detail.attributes && detail.attributes.length > 0) {
-        const attrs = detail.attributes.map(attr => {
-          const name = attr.name || attr.Name || attr.key || 'Unknown';
-          const value = attr.value || attr.Value || attr.measureUnit || 'N/A';
-          return `${escapeHtml(name)}: ${escapeHtml(value)}`;
-        });
-        attributesHtml = attrs.join(', ');
-      } else if (detail.Attributes && detail.Attributes.length > 0) {
-        const attrs = detail.Attributes.map(attr => {
-          const name = attr.name || attr.Name || 'Unknown';
-          const value = attr.measureUnit || attr.MeasureUnit || 'N/A';
-          return `${escapeHtml(name)}: ${escapeHtml(value)}`;
-        });
-        attributesHtml = attrs.join(', ');
-      }
-
-      html += `
-        <tr class="table-row-hover">
-          <td><strong>#${detailId}</strong></td>
-          <td>${escapeHtml(storage)}</td>
-          <td>${escapeHtml(ram)}</td>
-          <td>${escapeHtml(processor)}</td>
-          <td><span class="badge bg-info">${escapeHtml(measureUnit)}</span></td>
-          <td class="text-muted small" style="max-width: 200px;" title="${attributesHtml}">${attributesHtml.length > 50 ? attributesHtml.substring(0, 50) + '...' : attributesHtml}</td>
-          <td><strong>$${price}</strong></td>
-          <td><span class="badge ${quantity > 0 ? 'bg-success' : 'bg-warning'}">${quantity}</span></td>
-          <td>
-            <div class="btn-group" role="group">
-              <button class="btn btn-sm btn-primary" onclick="MerchantApp.viewInventory(${detailId}, 'Variant #${detailId}')" title="View Inventory">
-                <i class="bi bi-box-seam"></i> Inventory
-              </button>
-              <button class="btn btn-sm btn-warning" onclick="MerchantApp.editProductDetail(${detailId})" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="MerchantApp.deleteProductDetail(${detailId})" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-    $("#productDetailsTableBody").html(html);
-  }
-
-  // ==================== INVENTORY VIEW ====================
-  function viewInventory(productDetailId, productDetailName) {
-    if (!productDetailId) {
-      showNotification('Product Detail ID is required', 'error');
-      return;
-    }
-
-    navigationState.currentView = 'inventory';
-    navigationState.currentProductDetailId = productDetailId;
-    navigationState.currentProductDetailName = productDetailName || 'Variant';
-
-    loadInventoryView(productDetailId, productDetailName);
-  }
-
-  function loadInventoryView(productDetailId, productDetailName) {
-    const html = `
-      <div class="section-container">
-        <!-- Breadcrumb Navigation -->
-        <nav aria-label="breadcrumb" class="mb-3">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="#" onclick="MerchantApp.showSection('Products'); return false;"><i class="bi bi-box-seam me-1"></i>Products</a></li>
-            <li class="breadcrumb-item"><a href="#" onclick="MerchantApp.viewProductVariants(${navigationState.currentProductId}, '${escapeHtml(navigationState.currentProductName || 'Product')}'); return false;">${escapeHtml(navigationState.currentProductName || 'Product')}</a></li>
-            <li class="breadcrumb-item active">${escapeHtml(productDetailName || 'Variant')} - Inventory</li>
-          </ol>
-        </nav>
-        
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 class="section-title mb-1"><i class="bi bi-box-seam me-2"></i>Inventory Management</h2>
-            <p class="text-muted mb-0">${escapeHtml(productDetailName || 'Variant')} - Manage serial numbers and inventory items</p>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-secondary" onclick="MerchantApp.viewProductVariants(${navigationState.currentProductId}, '${escapeHtml(navigationState.currentProductName || 'Product')}');">
-              <i class="bi bi-arrow-left me-2"></i>Back to Variants
-            </button>
-            <button class="btn btn-success" id="btnAddInventoryItem">
-              <i class="bi bi-plus-circle me-2"></i>Add Inventory Item
-            </button>
-            <button class="btn btn-primary" id="btnRefreshInventory">
-              <i class="bi bi-arrow-clockwise me-2"></i>Refresh
-            </button>
-          </div>
-        </div>
-        
-        <!-- Inventory Summary Card -->
-        <div class="row mb-4">
-          <div class="col-md-4">
-            <div class="card bg-primary text-white">
-              <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-box-seam me-2"></i>Total Units</h5>
-                <h2 class="mb-0" id="inventoryTotalCount">0</h2>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card bg-success text-white">
-              <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-check-circle me-2"></i>Available</h5>
-                <h2 class="mb-0" id="inventoryAvailableCount">0</h2>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card bg-warning text-white">
-              <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-exclamation-triangle me-2"></i>Reserved</h5>
-                <h2 class="mb-0" id="inventoryReservedCount">0</h2>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Inventory Table -->
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="inventoryTable">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Serial Number</th>
-                    <th>Created At</th>
-                    <th>Status</th>
-                    <th style="width: 150px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="inventoryTableBody">
-                  <tr><td colspan="5" class="text-center py-4"><i class="bi bi-arrow-repeat spin me-2"></i>Loading inventory...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div id="inventoryEmpty" class="text-center py-5" style="display: none;">
-              <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-              <p class="text-muted mt-3">No inventory items found for this variant.</p>
-              <button class="btn btn-success" onclick="$('#btnAddInventoryItem').click();">
-                <i class="bi bi-plus-circle me-2"></i>Add First Inventory Item
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    $("#dynamicContentContainer").show().html(html);
-
-    // Fetch inventory
-    fetchInventory(productDetailId);
-
-    // Bind event handlers
-    $(document).off('click', '#btnRefreshInventory').on('click', '#btnRefreshInventory', function () {
-      fetchInventory(productDetailId);
-    });
-
-    $(document).off('click', '#btnAddInventoryItem').on('click', '#btnAddInventoryItem', function () {
-      showAddInventoryModal(productDetailId);
-    });
-  }
-
-  function fetchInventory(productDetailId) {
-    $.ajax({
-      url: API_ENDPOINTS.inventory.getByProductDetailId(productDetailId),
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        // The response might be a single InventoryDto or a list
-        // Adapt based on actual backend response
-        const inventory = response.inventory || response.items || response || [];
-        renderInventoryTable(inventory, productDetailId);
-        updateInventorySummary(inventory);
-      },
-      error: function (xhr) {
-        console.error('Error fetching inventory:', xhr);
-        // If endpoint returns 404, it might mean no inventory exists yet
-        if (xhr.status === 404) {
-          renderInventoryTable([], productDetailId);
-          updateInventorySummary([]);
-        } else {
-          let errorMsg = 'Error loading inventory';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMsg = xhr.responseJSON.message;
-          }
-          $("#inventoryTableBody").html(`<tr><td colspan="5" class="text-center text-danger py-4">${errorMsg}</td></tr>`);
-        }
-      }
-    });
-  }
-
-  function renderInventoryTable(inventory, productDetailId) {
-    // Note: The backend InventoryDto doesn't have serial numbers per item
-    // It has QuantityAvailable, QuantityReserved
-    // We'll need to adapt this based on actual requirements
-    // For now, we'll show the inventory summary
-
-    if (!inventory || (Array.isArray(inventory) && inventory.length === 0)) {
-      $("#inventoryTableBody").html('');
-      $("#inventoryTable").hide();
-      $("#inventoryEmpty").show();
-      return;
-    }
-
-    $("#inventoryTable").show();
-    $("#inventoryEmpty").hide();
-
-    // If inventory is a single object (not array), convert to array
-    const inventoryList = Array.isArray(inventory) ? inventory : [inventory];
-
-    let html = '';
-    if (inventoryList.length > 0 && inventoryList[0].quantityAvailable !== undefined) {
-      // Backend returns quantity-based inventory, not serial-based
-      // We'll show it as a summary for now
-      const inv = inventoryList[0];
-      html += `
-        <tr>
-          <td>1</td>
-          <td><span class="text-muted">Quantity-based inventory</span></td>
-          <td>${inv.createdDate ? new Date(inv.createdDate).toLocaleDateString() : 'N/A'}</td>
-          <td>
-            <span class="badge bg-success">Available: ${inv.quantityAvailable || 0}</span>
-            <span class="badge bg-warning ms-1">Reserved: ${inv.quantityReserved || 0}</span>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-warning" onclick="showEditInventoryModal(${productDetailId})" title="Update Stock">
-              <i class="bi bi-pencil"></i> Update
-            </button>
-          </td>
-        </tr>
-      `;
-    } else {
-      // If we have serial numbers (future implementation)
-      inventoryList.forEach((item, index) => {
-        const serialNumber = item.serialNumber || item.SerialNumber || `SN-${index + 1}`;
-        const createdAt = item.createdAt || item.CreatedAt || item.createdDate || 'N/A';
-        html += `
-          <tr class="table-row-hover">
-            <td>${index + 1}</td>
-            <td><strong>${escapeHtml(serialNumber)}</strong></td>
-            <td>${typeof createdAt === 'string' ? createdAt : new Date(createdAt).toLocaleDateString()}</td>
-            <td><span class="badge bg-success">Active</span></td>
-            <td>
-              <button class="btn btn-sm btn-danger" onclick="MerchantApp.deleteInventoryItem(${item.inventoryId || item.InventoryId || index}, ${productDetailId})" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    $("#inventoryTableBody").html(html);
-  }
-
-  function updateInventorySummary(inventory) {
-    if (!inventory || (Array.isArray(inventory) && inventory.length === 0)) {
-      $("#inventoryTotalCount").text('0');
-      $("#inventoryAvailableCount").text('0');
-      $("#inventoryReservedCount").text('0');
-      return;
-    }
-
-    const inv = Array.isArray(inventory) ? inventory[0] : inventory;
-    const available = inv.quantityAvailable || inv.QuantityAvailable || 0;
-    const reserved = inv.quantityReserved || inv.QuantityReserved || 0;
-    const total = available + reserved;
-
-    $("#inventoryTotalCount").text(total);
-    $("#inventoryAvailableCount").text(available);
-    $("#inventoryReservedCount").text(reserved);
-  }
-
-  // ==================== PRODUCT MODALS ====================
-  function showAddProductModal() {
-    const modalHtml = `
-      <div class="modal fade" id="addProductModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add New Product</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="addProductForm">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="newProductName" class="form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="newProductName" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label for="newProductCategory" class="form-label">Category</label>
-                    <input type="text" class="form-control" id="newProductCategory" placeholder="Optional">
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label for="newProductDescription" class="form-label">Description</label>
-                  <textarea class="form-control" id="newProductDescription" rows="3" placeholder="Enter product description"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label for="newProductImageUrl" class="form-label">Image URL</label>
-                  <input type="url" class="form-control" id="newProductImageUrl" placeholder="https://example.com/image.jpg">
-                  <small class="text-muted">Or use the product wizard for image upload</small>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-success" id="btnConfirmAddProduct">
-                <i class="bi bi-check-circle me-2"></i>Add Product
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('#addProductModal').remove();
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
-    modal.show();
-
-    $('#btnConfirmAddProduct').off('click').on('click', function () {
-      const productName = $('#newProductName').val().trim();
-      const description = $('#newProductDescription').val().trim();
-      const imageUrl = $('#newProductImageUrl').val().trim();
-
-      if (!productName) {
-        showNotification('Product name is required', 'error');
-        return;
-      }
-
-      // Use the existing product wizard or create via API
-      // For now, redirect to wizard
-      modal.hide();
-      $("#dynamicContentContainer").hide();
-      $("#productWizardContainer").show();
-      $('#productName').val(productName);
-      if (description) $('#description').val(description);
-      if (imageUrl) {
-        // Note: Image URL handling may need to be adapted
-      }
-    });
-
-    $('#addProductModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-  }
-
-  function showEditProductModal(product) {
-    const productId = product.productId || product.ProductId;
-    const modalHtml = `
-      <div class="modal fade" id="editProductModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Edit Product</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="editProductForm">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="editProductName" class="form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="editProductName" value="${escapeHtml(product.productName || product.ProductName || '')}" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label for="editProductCategory" class="form-label">Category</label>
-                    <input type="text" class="form-control" id="editProductCategory" value="${escapeHtml(product.categoryName || product.CategoryName || '')}" placeholder="Optional">
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label for="editProductDescription" class="form-label">Description</label>
-                  <textarea class="form-control" id="editProductDescription" rows="3">${escapeHtml(product.productDescription || product.ProductDescription || '')}</textarea>
-                </div>
-                <div class="mb-3">
-                  <label for="editProductImageUrl" class="form-label">Image URL</label>
-                  <input type="url" class="form-control" id="editProductImageUrl" value="${escapeHtml(product.imageUrl || product.ImageUrl || '')}" placeholder="https://example.com/image.jpg">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" id="btnConfirmEditProduct">
-                <i class="bi bi-check-circle me-2"></i>Update Product
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('#editProductModal').remove();
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
-    modal.show();
-
-    $('#btnConfirmEditProduct').off('click').on('click', function () {
-      const productName = $('#editProductName').val().trim();
-      const description = $('#editProductDescription').val().trim();
-      const imageUrl = $('#editProductImageUrl').val().trim();
-
-      if (!productName) {
-        showNotification('Product name is required', 'error');
-        return;
-      }
-
-      // Create FormData for multipart/form-data (as backend expects [FromForm])
-      const formData = new FormData();
-      formData.append('ProductName', productName);
-      if (description) formData.append('ProductDescription', description);
-      if (imageUrl) formData.append('ImageUrl', imageUrl);
-
-      $.ajax({
-        url: API_ENDPOINTS.products.update(productId),
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-          showNotification('Product updated successfully!', 'success');
-          modal.hide();
-          const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-          const token = authData.jwt;
-          let userId = null;
-          if (token) {
-            try {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              userId = payload.sub || payload.nameid;
-            } catch (e) {
-              console.error('Error parsing token:', e);
-            }
-          }
-          if (userId) fetchProducts(userId);
-        },
-        error: function (xhr) {
-          console.error('Error updating product:', xhr);
-          let errorMsg = 'Error updating product';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMsg = xhr.responseJSON.message;
-          }
-          showNotification(errorMsg, 'error');
-        }
-      });
-    });
-
-    $('#editProductModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-  }
-
-  // ==================== PRODUCT DETAIL MODALS ====================
-  function showAddProductDetailModal(productId) {
-    const modalHtml = `
-      <div class="modal fade" id="addProductDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add Product Variant</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="addProductDetailForm">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="newDetailStorage" class="form-label">Storage</label>
-                    <input type="text" class="form-control" id="newDetailStorage" placeholder="e.g., 128 GB">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="newDetailRAM" class="form-label">RAM</label>
-                    <input type="text" class="form-control" id="newDetailRAM" placeholder="e.g., 8 GB">
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="newDetailProcessor" class="form-label">Processor</label>
-                    <input type="text" class="form-control" id="newDetailProcessor" placeholder="e.g., Helio G99">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="newDetailMeasureUnit" class="form-label">Measure Unit <span class="text-danger">*</span></label>
-                    <select class="form-select" id="newDetailMeasureUnit" required>
-                      <option value="">Choose...</option>
-                      <option value="piece">Piece</option>
-                      <option value="box">Box</option>
-                      <option value="pack">Pack</option>
-                      <option value="kg">Kilogram (kg)</option>
-                      <option value="g">Gram (g)</option>
-                      <option value="l">Liter (L)</option>
-                      <option value="ml">Milliliter (ml)</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label for="newDetailPrice" class="form-label">Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                      <span class="input-group-text">$</span>
-                      <input type="number" class="form-control" id="newDetailPrice" step="0.01" min="0.01" required>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label for="newDetailQuantity" class="form-label">Initial Quantity <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="newDetailQuantity" min="0" value="0" required>
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label for="newDetailDescription" class="form-label">Description</label>
-                  <textarea class="form-control" id="newDetailDescription" rows="2" placeholder="Optional variant description"></textarea>
-                </div>
-                
-                <!-- Dynamic Attributes Section -->
-                <div class="mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label mb-0">Attributes</label>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAttributeRow">
-                      <i class="bi bi-plus-circle me-1"></i>Add Attribute
-                    </button>
-                  </div>
-                  <div id="attributesContainer">
-                    <!-- Attribute rows will be added here -->
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-success" id="btnConfirmAddProductDetail">
-                <i class="bi bi-check-circle me-2"></i>Add Variant
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('#addProductDetailModal').remove();
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('addProductDetailModal'));
-    modal.show();
-
-    // Add attribute row functionality
-    let attributeRowCount = 0;
-    function addAttributeRow() {
-      attributeRowCount++;
-      const rowHtml = `
-        <div class="row mb-2 attribute-row" data-row-id="${attributeRowCount}">
-          <div class="col-md-5">
-            <input type="text" class="form-control attribute-name" placeholder="Attribute name (e.g., Color)">
-          </div>
-          <div class="col-md-5">
-            <input type="text" class="form-control attribute-value" placeholder="Attribute value (e.g., Blue)">
-          </div>
-          <div class="col-md-2">
-            <button type="button" class="btn btn-sm btn-danger w-100 remove-attribute-row">
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        </div>
-      `;
-      $('#attributesContainer').append(rowHtml);
-    }
-
-    $(document).off('click', '#btnAddAttributeRow').on('click', '#btnAddAttributeRow', function () {
-      addAttributeRow();
-    });
-
-    $(document).off('click', '.remove-attribute-row').on('click', '.remove-attribute-row', function () {
-      $(this).closest('.attribute-row').remove();
-    });
-
-    $('#btnConfirmAddProductDetail').off('click').on('click', function () {
-      const measureUnit = $('#newDetailMeasureUnit').val();
-      const price = parseFloat($('#newDetailPrice').val());
-      const quantity = parseInt($('#newDetailQuantity').val());
-
-      if (!measureUnit || !price || price <= 0) {
-        showNotification('Please fill in all required fields with valid values', 'error');
-        return;
-      }
-
-      // Collect attributes
-      const attributes = [];
-      $('.attribute-row').each(function () {
-        const name = $(this).find('.attribute-name').val().trim();
-        const value = $(this).find('.attribute-value').val().trim();
-        if (name && value) {
-          // Note: Backend expects AttributeId and MeasureUnitId
-          // For now, we'll send name/value pairs and adapt if needed
-          attributes.push({ key: name, value: value });
-        }
-      });
-
-      // Build request body
-      const requestData = {
-        productId: productId,
-        serialNumber: `SN-${Date.now()}`, // Generate serial number
-        price: price,
-        description: $('#newDetailDescription').val().trim() || null,
-        quantityAvailable: quantity,
-        attributes: attributes.map(attr => ({
-          attributeId: 0, // Will need to be resolved from attribute name
-          measureUnitId: 0 // Will need to be resolved
-        }))
-      };
-
-      $.ajax({
-        url: API_ENDPOINTS.productDetails.create(),
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(requestData),
-        success: function (response) {
-          showNotification('Product variant added successfully!', 'success');
-          modal.hide();
-          fetchProductDetails(productId);
-        },
-        error: function (xhr) {
-          console.error('Error adding product detail:', xhr);
-          let errorMsg = 'Error adding variant';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMsg = xhr.responseJSON.message;
-          }
-          showNotification(errorMsg, 'error');
-        }
-      });
-    });
-
-    $('#addProductDetailModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-  }
-
-  function editProductDetail(detailId) {
-    $.ajax({
-      url: API_ENDPOINTS.productDetails.getById(detailId),
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (detail) {
-        showEditProductDetailModal(detail);
-      },
-      error: function (xhr) {
-        console.error('Error fetching product detail:', xhr);
-        showNotification('Error loading variant details', 'error');
-      }
-    });
-  }
-
-  function showEditProductDetailModal(detail) {
-    // Similar to add modal but pre-filled
-    showNotification('Edit variant functionality - Similar to add modal with pre-filled data', 'info');
-    // Implementation similar to showAddProductDetailModal but with edit logic
-  }
-
-  function deleteProductDetail(detailId) {
-    showConfirmModal(
-      'Delete Variant',
-      'Are you sure you want to delete this variant? This action cannot be undone.',
-      function () {
-        $.ajax({
-          url: API_ENDPOINTS.productDetails.delete(detailId),
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function (response) {
-            showNotification('Variant deleted successfully!', 'success');
-            if (navigationState.currentProductId) {
-              fetchProductDetails(navigationState.currentProductId);
-            }
-          },
-          error: function (xhr) {
-            console.error('Error deleting product detail:', xhr);
-            let errorMsg = 'Error deleting variant';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-              errorMsg = xhr.responseJSON.message;
-            }
-            showNotification(errorMsg, 'error');
-          }
-        });
-      }
-    );
-  }
-
-  // ==================== INVENTORY MODALS ====================
-  function showAddInventoryModal(productDetailId) {
-    const modalHtml = `
-      <div class="modal fade" id="addInventoryModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add Inventory Item</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="addInventoryForm">
-                <div class="mb-3">
-                  <label for="newInventorySerialNumber" class="form-label">Serial Number <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="newInventorySerialNumber" placeholder="Enter serial number" required>
-                  <small class="text-muted">Unique identifier for this inventory item</small>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-success" id="btnConfirmAddInventory">
-                <i class="bi bi-check-circle me-2"></i>Add Item
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('#addInventoryModal').remove();
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('addInventoryModal'));
-    modal.show();
-
-    $('#btnConfirmAddInventory').off('click').on('click', function () {
-      const serialNumber = $('#newInventorySerialNumber').val().trim();
-
-      if (!serialNumber) {
-        showNotification('Serial number is required', 'error');
-        return;
-      }
-
-      // Note: Backend may not support adding individual serial numbers
-      // This might need to update stock quantity instead
-      // Adapt based on actual backend implementation
-      $.ajax({
-        url: API_ENDPOINTS.inventory.create(productDetailId),
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ serialNumber: serialNumber }),
-        success: function (response) {
-          showNotification('Inventory item added successfully!', 'success');
-          modal.hide();
-          fetchInventory(productDetailId);
-        },
-        error: function (xhr) {
-          console.error('Error adding inventory item:', xhr);
-          let errorMsg = 'Error adding inventory item';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMsg = xhr.responseJSON.message;
-          }
-          showNotification(errorMsg, 'error');
-        }
-      });
-    });
-
-    $('#addInventoryModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-  }
-
-  function showEditInventoryModal(productDetailId) {
-    // Show modal to update stock quantity
-    const modalHtml = `
-      <div class="modal fade" id="editInventoryModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Update Stock Quantity</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="editInventoryForm">
-                <div class="mb-3">
-                  <label for="editInventoryQuantity" class="form-label">New Quantity <span class="text-danger">*</span></label>
-                  <input type="number" class="form-control" id="editInventoryQuantity" min="0" required>
-                  <small class="text-muted">Enter the new total quantity available</small>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" id="btnConfirmUpdateInventory">
-                <i class="bi bi-check-circle me-2"></i>Update Stock
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('#editInventoryModal').remove();
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('editInventoryModal'));
-    modal.show();
-
-    $('#btnConfirmUpdateInventory').off('click').on('click', function () {
-      const newQuantity = parseInt($('#editInventoryQuantity').val());
-
-      if (isNaN(newQuantity) || newQuantity < 0) {
-        showNotification('Please enter a valid quantity (0 or greater)', 'error');
-        return;
-      }
-
-      $.ajax({
-        url: API_ENDPOINTS.inventory.updateStock(productDetailId),
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ newQuantity: newQuantity }),
-        success: function (response) {
-          showNotification('Stock quantity updated successfully!', 'success');
-          modal.hide();
-          fetchInventory(productDetailId);
-        },
-        error: function (xhr) {
-          console.error('Error updating inventory:', xhr);
-          let errorMsg = 'Error updating stock';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMsg = xhr.responseJSON.message;
-          }
-          showNotification(errorMsg, 'error');
-        }
-      });
-    });
-
-    $('#editInventoryModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-  }
-
-  function deleteInventoryItem(inventoryId, productDetailId) {
-    showConfirmModal(
-      'Delete Inventory Item',
-      'Are you sure you want to delete this inventory item? This action cannot be undone.',
-      function () {
-        $.ajax({
-          url: API_ENDPOINTS.inventory.delete(inventoryId),
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function (response) {
-            showNotification('Inventory item deleted successfully!', 'success');
-            fetchInventory(productDetailId);
-          },
-          error: function (xhr) {
-            console.error('Error deleting inventory item:', xhr);
-            let errorMsg = 'Error deleting inventory item';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-              errorMsg = xhr.responseJSON.message;
-            }
-            showNotification(errorMsg, 'error');
-          }
-        });
-      }
-    );
-  }
-
-  // ==================== PRODUCTS SECTION ====================
-
-  // Cache for subcategories
-  let subcategoriesCache = null;
-
-  function loadProductsList() {
-    const html = `
-      <div class="section-container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="section-title"><i class="bi bi-box-seam me-2"></i>Products Management</h2>
-          <button class="btn btn-primary" id="btnAddProduct">
-            <i class="bi bi-plus-circle me-2"></i>Add Product
-          </button>
-        </div>
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-search"></i></span>
-                  <input type="text" class="form-control" id="productSearch" placeholder="Search products...">
-                </div>
-              </div>
-              <div class="col-md-6 text-end">
-                <span class="badge bg-primary" id="productCount">0 products</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0" id="productTable">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Type</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="productTableBody">
-                  <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mt-3">
-          <div>
-            <label class="me-2">Page:</label>
-            <input type="number" id="productPageNumber" class="form-control d-inline-block" style="width: 80px;" value="1" min="1">
-            <label class="ms-2 me-2">Page Size:</label>
-            <select id="productPageSize" class="form-select d-inline-block" style="width: 100px;">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-          <div id="productPaginationInfo"></div>
-        </div>
-      </div>
-    `;
-    $("#dynamicContentContainer").show().html(html);
-    fetchProducts();
-
-    $(document).off('click', '#btnAddProduct').on('click', '#btnAddProduct', () => showProductModal());
-    $(document).off('change', '#productPageNumber, #productPageSize').on('change', '#productPageNumber, #productPageSize', fetchProducts);
-    $(document).off('input', '#productSearch').on('input', '#productSearch', function () {
-      const query = $(this).val();
-      if (query.trim()) {
-        searchProducts(query);
-      } else {
-        fetchProducts();
-      }
-    });
-  }
-
-  function fetchProducts(page = 1, pageSize = 10) {
-    page = parseInt($('#productPageNumber').val()) || page;
-    pageSize = parseInt($('#productPageSize').val()) || pageSize;
-
-    const userId = getUserIdFromToken();
-    if (!userId) {
-      $("#productTableBody").html('<tr><td colspan="6" class="text-center text-danger">User ID not found</td></tr>');
-      return;
-    }
-
-    $.ajax({
-      url: API_ENDPOINTS.products.getAll(userId, page, pageSize),
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        const products = response.data || response.items || response || [];
-        const totalCount = response.totalCount || response.total || products.length;
-        const totalPages = response.totalPages || Math.ceil(totalCount / pageSize);
-        renderProductsTable(products);
-        $('#productPaginationInfo').text(`Page ${page} of ${totalPages} (Total: ${totalCount} products)`);
-        $('#productCount').text(`${totalCount} product${totalCount !== 1 ? 's' : ''}`);
-      },
-      error: function (xhr) {
-        console.error('Error fetching products:', xhr);
-        $("#productTableBody").html('<tr><td colspan="6" class="text-center text-danger">Error loading products</td></tr>');
-      }
-    });
-  }
-
-  function renderProductsTable(products) {
-    if (!products || products.length === 0) {
-      $("#productTableBody").html('<tr><td colspan="6" class="text-center py-5"><i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i><p class="mt-3 text-muted">No products found</p></td></tr>');
-      return;
-    }
-
-    let html = '';
-    products.forEach(product => {
-      const productId = product.productId || product.id;
-      const imageUrl = product.imageUrl || product.productImageUrl || 'images/placeholder.png';
-      html += `
-        <tr>
-          <td><strong>#${productId}</strong></td>
-          <td><img src="${imageUrl}" width="50" height="50" class="img-thumbnail" onerror="this.src='images/placeholder.png'"></td>
-          <td>${product.productName || product.name || 'N/A'}</td>
-          <td>${(product.productDescription || product.description || 'N/A').substring(0, 50)}...</td>
-          <td><span class="badge bg-info">${product.typeName || product.type || 'N/A'}</span></td>
-          <td>
-            <div class="btn-group" role="group">
-              <button class="btn btn-sm btn-outline-success" onclick="MerchantApp.manageVariants(${productId}, '${(product.productName || product.name || '').replace(/'/g, "\\'")}'))" title="Manage Variants">
-                <i class="bi bi-list-ul"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-primary" onclick="MerchantApp.editProduct(${productId})" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="MerchantApp.deleteProduct(${productId})" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-    $("#productTableBody").html(html);
-  }
-
-  function searchProducts(query) {
-    const page = parseInt($('#productPageNumber').val()) || 1;
-    const pageSize = parseInt($('#productPageSize').val()) || 10;
-
-    $.ajax({
-      url: API_ENDPOINTS.products.search(query, page, pageSize),
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        const products = response.data || response.items || response || [];
-        renderProductsTable(products);
-      },
-      error: function (xhr) {
-        console.error('Error searching products:', xhr);
-        $("#productTableBody").html('<tr><td colspan="6" class="text-center text-danger">Error searching products</td></tr>');
-      }
-    });
-  }
-
-  function showProductModal(productId = null) {
-    const isEdit = productId !== null;
-    const modalHtml = `
-      <div class="modal fade" id="productModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">${isEdit ? 'Edit' : 'Add'} Product</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="productForm">
-                <input type="hidden" id="productId" value="${productId || ''}">
-                <div class="mb-3">
-                  <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="productName" required>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="productDescription" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Subcategory/Type <span class="text-danger">*</span></label>
-                  <select class="form-select" id="productType" required>
-                    <option value="">Loading subcategories...</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Product Images</label>
-                  <input type="file" class="form-control" id="productImages" accept="image/*" multiple>
-                  <small class="text-muted">Images will be uploaded to AWS S3</small>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" id="saveProductBtn">Save Product</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('productModal'));
-    modal.show();
-
-    fetchSubcategories();
-
-    $('#productModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-
-    $('#saveProductBtn').on('click', saveProduct);
-
-    if (isEdit) {
-      $.ajax({
-        url: API_ENDPOINTS.products.getById(productId),
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-        success: function (product) {
-          // CRITICAL FIX: Use scoped selectors to avoid duplicate IDs
-          const $modal = $('#productModal');
-          $modal.find('#productName').val(product.productName || product.name);
-          $modal.find('#productDescription').val(product.productDescription || product.description);
-          $modal.find('#productType').val(product.typeId || product.type?.id);
-        },
-        error: function (xhr) {
-          console.error('Error loading product:', xhr);
-          showNotification('Error loading product details', 'error');
-        }
-      });
-    }
-  }
-
-  function saveProduct() {
-    // CRITICAL FIX: Scope selectors to #productModal to avoid duplicate IDs from old wizard
-    const $modal = $('#productModal');
-    const productId = $modal.find('#productId').val();
-    const productName = $modal.find('#productName').val();
-    const productDescription = $modal.find('#productDescription').val();
-    const typeId = $modal.find('#productType').val();
-    const storeId = getStoreId();
-
-    // Detailed validation with specific error messages
-    if (!productName || productName.trim() === '') {
-      showNotification('Product name is required', 'error');
-      $modal.find('#productName').focus();
-      return;
-    }
-
-    if (!typeId || typeId === '') {
-      showNotification('Please select a subcategory/type', 'error');
-      $modal.find('#productType').focus();
-      return;
-    }
-
-    console.log('Saving product with:', { productName, typeId, storeId, productDescription });
-
-    const formData = new FormData();
-    formData.append('ProductName', productName);
-    formData.append('ProductDescription', productDescription || '');
-    formData.append('TypeId', typeId);
-    formData.append('StoreId', storeId);
-
-    const imageFiles = $modal.find('#productImages')[0].files;
-    if (imageFiles.length > 0 && !productId) {
-      for (let i = 0; i < imageFiles.length; i++) {
-        formData.append('Images', imageFiles[i]);
-      }
-    }
-
-    const method = productId ? 'PUT' : 'POST';
-    const url = productId ? API_ENDPOINTS.products.update(productId) : API_ENDPOINTS.products.create();
-
-    $.ajax({
-      url: url,
-      method: method,
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      processData: false,
-      contentType: false,
-      data: formData,
-      success: function (response) {
-        showNotification(`Product ${productId ? 'updated' : 'created'} successfully!`, 'success');
-        bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-        fetchProducts();
-
-        if (!productId && imageFiles.length > 0 && response.productId) {
-          uploadProductImages(response.productId, imageFiles);
-        }
-      },
-      error: function (xhr) {
-        console.error('Error saving product:', xhr);
-        console.error('Response:', xhr.responseJSON);
-        let errorMsg = 'Error saving product';
-        if (xhr.responseJSON?.message) {
-          errorMsg = xhr.responseJSON.message;
-        } else if (xhr.responseJSON?.errors) {
-          errorMsg = Object.values(xhr.responseJSON.errors).flat().join(', ');
-        } else if (xhr.responseText) {
-          errorMsg = xhr.responseText;
-        }
-        showNotification(errorMsg, 'error');
-      }
-    });
-  }
-
-  function deleteProduct(productId) {
-    showConfirmModal(
-      'Delete Product',
-      'Are you sure you want to delete this product? This action cannot be undone.',
-      function () {
-        $.ajax({
-          url: API_ENDPOINTS.products.delete(productId),
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function () {
-            showNotification('Product deleted successfully!', 'success');
-            fetchProducts();
-          },
-          error: function (xhr) {
-            console.error('Error deleting product:', xhr);
-            showNotification('Error deleting product', 'error');
-          }
-        });
-      }
-    );
-  }
-
-  function uploadProductImages(productId, files) {
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images', files[i]);
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/merchant/products/${productId}/images`,
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      processData: false,
-      contentType: false,
-      data: formData,
-      success: function (response) {
-        console.log('Images uploaded successfully:', response);
-        showNotification('Product images uploaded successfully!', 'success');
-        fetchProducts();
-      },
-      error: function (xhr) {
-        console.error('Error uploading images:', xhr);
-        showNotification('Product created, but error uploading images', 'error');
-      }
-    });
-  }
-
-  function fetchSubcategories() {
-    if (subcategoriesCache) {
-      populateTypeDropdown(subcategoriesCache);
-      return;
-    }
-
-    $.ajax({
-      url: `${API_BASE_URL}/Category/subcategory`,
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        const subcategories = response.data || response.items || response || [];
-        subcategoriesCache = subcategories;
-        populateTypeDropdown(subcategories);
-      },
-      error: function (xhr) {
-        console.error('Error fetching subcategories:', xhr);
-        // CRITICAL FIX: Scope to #productModal to avoid duplicate IDs
-        $('#productModal').find('#productType').html('<option value="">Error loading subcategories</option>');
-      }
-    });
-  }
-
-  function populateTypeDropdown(subcategories) {
-    let options = '<option value="">Select Subcategory/Type</option>';
-    subcategories.forEach(sub => {
-      const subId = sub.subCategoryId || sub.id;
-      const subName = sub.subCategoryName || sub.name;
-      options += `<option value="${subId}">${subName}</option>`;
-    });
-    // CRITICAL FIX: Scope to #productModal to avoid duplicate IDs
-    $('#productModal').find('#productType').html(options);
-  }
-
-
-  // ==================== PRODUCT DETAILS/VARIANTS SECTION ====================
-
-  function loadProductDetails(productId, productName) {
-    navigationState.currentView = 'productDetails';
-    navigationState.currentProductId = productId;
-    navigationState.currentProductName = productName;
-
-    const html = `
-      <div class="section-container">
-        <div class="mb-3">
-          <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a href="#" onclick="MerchantApp.backToProducts(); return false;">Products</a></li>
-              <li class="breadcrumb-item active">${productName} - Variants</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="section-title"><i class="bi bi-box me-2"></i>Product Variants - ${productName}</h2>
-          <div>
-            <button class="btn btn-secondary me-2" onclick="MerchantApp.backToProducts()">
-              <i class="bi bi-arrow-left me-2"></i>Back to Products
-            </button>
-            <button class="btn btn-primary" id="btnAddVariant">
-              <i class="bi bi-plus-circle me-2"></i>Add Variant
-            </button>
-          </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Storage</th>
-                    <th>RAM</th>
-                    <th>Processor</th>
-                    <th>Measure Unit</th>
-                    <th>Price</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="variantsTableBody">
-                  <tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $("#dynamicContentContainer").show().html(html);
-    fetchProductDetails(productId);
-
-    $(document).off('click', '#btnAddVariant').on('click', '#btnAddVariant', () => showVariantModal(null, productId));
-  }
-
-  function fetchProductDetails(productId) {
-    $.ajax({
-      url: `${API_BASE_URL}/merchant/products/${productId}/details`,
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      success: function (response) {
-        const details = response.data || response.items || response || [];
-        renderVariantsTable(details);
-      },
-      error: function (xhr) {
-        console.error('Error fetching product details:', xhr);
-        if (xhr.status === 404) {
-          $("#variantsTableBody").html('<tr><td colspan="7" class="text-center py-4"><p class="text-muted">No variants found. Add your first variant!</p></td></tr>');
-        } else {
-          $("#variantsTableBody").html('<tr><td colspan="7" class="text-center text-danger">Error loading variants</td></tr>');
-        }
-      }
-    });
-  }
-
-  function renderVariantsTable(details) {
-    if (!details || details.length === 0) {
-      $("#variantsTableBody").html('<tr><td colspan="7" class="text-center py-4"><p class="text-muted">No variants found. Add your first variant!</p></td></tr>');
-      return;
-    }
-
-    let html = '';
-    details.forEach(detail => {
-      const detailId = detail.productDetailId || detail.id;
-      html += `
-        <tr>
-          <td><strong>#${detailId}</strong></td>
-          <td>${detail.storage || 'N/A'}</td>
-          <td>${detail.ram || 'N/A'}</td>
-          <td>${detail.processor || 'N/A'}</td>
-          <td>${detail.measureUnit || 'N/A'}</td>
-          <td><strong>$${parseFloat(detail.price || 0).toFixed(2)}</strong></td>
-          <td>
-            <div class="btn-group" role="group">
-              <button class="btn btn-sm btn-outline-primary" onclick="MerchantApp.editVariant(${detailId}, ${navigationState.currentProductId})" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="MerchantApp.deleteVariant(${detailId})" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-    $("#variantsTableBody").html(html);
-  }
-
-  function showVariantModal(detailId = null, productId = null) {
-    const isEdit = detailId !== null;
-    const targetProductId = productId || navigationState.currentProductId;
-
-    const modalHtml = `
-      <div class="modal fade" id="variantModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">${isEdit ? 'Edit' : 'Add'} Product Variant</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="variantForm">
-                <input type="hidden" id="variantId" value="${detailId || ''}">
-                <input type="hidden" id="variantProductId" value="${targetProductId}">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Storage</label>
-                    <input type="text" class="form-control" id="variantStorage" placeholder="e.g., 128GB">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">RAM</label>
-                    <input type="text" class="form-control" id="variantRam" placeholder="e.g., 8GB">
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Processor</label>
-                    <input type="text" class="form-control" id="variantProcessor" placeholder="e.g., A16 Bionic">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Measure Unit</label>
-                    <input type="text" class="form-control" id="variantMeasureUnit" placeholder="e.g., piece, kg">
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                      <span class="input-group-text">$</span>
-                      <input type="number" class="form-control" id="variantPrice" step="0.01" required>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Stock Quantity</label>
-                    <input type="number" class="form-control" id="variantStock" min="0" placeholder="0">
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Additional Attributes (JSON)</label>
-                  <textarea class="form-control" id="variantAttributes" rows="3" placeholder='{"color": "Black", "warranty": "1 year"}'></textarea>
-                  <small class="text-muted">Optional: Enter additional attributes as JSON</small>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" id="saveVariantBtn">Save Variant</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $('body').append(modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('variantModal'));
-    modal.show();
-
-    $('#variantModal').on('hidden.bs.modal', function () {
-      $(this).remove();
-    });
-
-    $('#saveVariantBtn').on('click', saveVariant);
-
-    if (isEdit) {
-      $.ajax({
-        url: API_ENDPOINTS.productDetails.getById(detailId),
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-        success: function (detail) {
-          $('#variantStorage').val(detail.storage || '');
-          $('#variantRam').val(detail.ram || '');
-          $('#variantProcessor').val(detail.processor || '');
-          $('#variantMeasureUnit').val(detail.measureUnit || '');
-          $('#variantPrice').val(detail.price || '');
-          $('#variantStock').val(detail.stockQuantity || '');
-          if (detail.attributes && typeof detail.attributes === 'object') {
-            $('#variantAttributes').val(JSON.stringify(detail.attributes, null, 2));
-          }
-        },
-        error: function (xhr) {
-          console.error('Error loading variant:', xhr);
-          showNotification('Error loading variant details', 'error');
-        }
-      });
-    }
-  }
-
-  function saveVariant() {
-    const detailId = $('#variantId').val();
-    const productId = $('#variantProductId').val();
-    const price = $('#variantPrice').val();
-
-    if (!price) {
-      showNotification('Price is required', 'error');
-      return;
-    }
-
-    let attributes = null;
-    const attrsText = $('#variantAttributes').val();
-    if (attrsText) {
-      try {
-        attributes = JSON.parse(attrsText);
-      } catch (e) {
-        showNotification('Invalid JSON in attributes field', 'error');
-        return;
-      }
-    }
-
-    const data = {
-      productId: parseInt(productId),
-      storage: $('#variantStorage').val() || null,
-      ram: $('#variantRam').val() || null,
-      processor: $('#variantProcessor').val() || null,
-      measureUnit: $('#variantMeasureUnit').val() || null,
-      price: parseFloat(price),
-      stockQuantity: parseInt($('#variantStock').val()) || 0,
-      attributes: attributes
-    };
-
-    if (detailId) {
-      data.productDetailId = parseInt(detailId);
-    }
-
-    const method = detailId ? 'PUT' : 'POST';
-    const url = detailId ? API_ENDPOINTS.productDetails.update() : API_ENDPOINTS.productDetails.create();
-
-    $.ajax({
-      url: url,
-      method: method,
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      },
-      data: JSON.stringify(data),
-      success: function (response) {
-        showNotification(`Variant ${detailId ? 'updated' : 'created'} successfully!`, 'success');
-        bootstrap.Modal.getInstance(document.getElementById('variantModal')).hide();
-        fetchProductDetails(productId);
-      },
-      error: function (xhr) {
-        console.error('Error saving variant:', xhr);
-        let errorMsg = 'Error saving variant';
-        if (xhr.responseJSON?.message) {
-          errorMsg = xhr.responseJSON.message;
-        }
-        showNotification(errorMsg, 'error');
-      }
-    });
-  }
-
-  function deleteVariant(detailId) {
-    showConfirmModal(
-      'Delete Variant',
-      'Are you sure you want to delete this product variant? This action cannot be undone.',
-      function () {
-        $.ajax({
-          url: API_ENDPOINTS.productDetails.delete(detailId),
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-          success: function () {
-            showNotification('Variant deleted successfully!', 'success');
-            fetchProductDetails(navigationState.currentProductId);
-          },
-          error: function (xhr) {
-            console.error('Error deleting variant:', xhr);
-            showNotification('Error deleting variant', 'error');
-          }
-        });
-      }
-    );
-  }
-
-  function backToProducts() {
-    navigationState.currentView = 'products';
-    navigationState.currentProductId = null;
-    navigationState.currentProductName = null;
-    loadProductsList();
-  }
-
-  function getUserIdFromToken() {
-    try {
-      const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-      const token = authData.jwt;
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.sub || payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-      }
-    } catch (e) {
-      console.error('Error getting user ID:', e);
-    }
-    return null;
-  }
-
-  function getStoreId() {
-    try {
-      const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-      return authData.storeId || 1;
-    } catch (e) {
-      return 1;
-    }
-  }
-
-  // ==================== ORDERS & INVENTORY PLACEHOLDERS ====================
-
-  function loadOrders() {
-    $("#dynamicContentContainer").show().html('<div class="section-container"><h2>Orders</h2><p>Coming soon...</p></div>');
-  }
-
-  function loadInventory() {
-    $("#dynamicContentContainer").show().html('<div class="section-container"><h2>Inventory</h2><p>Coming soon...</p></div>');
-  }
-
   return {
     init: initializeMerchantApp,
     showSection,
     checkAttribute,
-    checkMeasure,
-    editProduct: (id) => showProductModal(id),
-    deleteProduct: deleteProduct,
-    manageVariants: (id, name) => loadProductDetails(id, name),
-    backToProducts: backToProducts,
-    editVariant: (detailId, productId) => showVariantModal(detailId, productId),
-    deleteVariant: deleteVariant
+    checkMeasure
   };
 })();
 
 // Initialize immediately when script loads to prevent other scripts from redirecting
-(function () {
+(function() {
   // Run initialization as soon as possible
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

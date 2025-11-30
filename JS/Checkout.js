@@ -1,29 +1,39 @@
 // Checkout.js
-// API Base URL
-const API_BASE_URL = 'https://cartify.runasp.net/api';
+const CartifyApi = window.CartifyApi || {};
+const API_BASE_URL = CartifyApi.baseUrl || 'https://cartify.runasp.net/api';
 
-// Helper function to get auth token
-function getAuthToken() {
-    const authData = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
-    return authData.jwt || null;
-}
-
-// Helper function to get userId from JWT token
-function getUserId() {
-    const token = getAuthToken();
-    if (!token) return null;
-    
+const fallbackGetAuthToken = () => {
     try {
-        const base64Payload = token.split('.')[1];
-        const payload = JSON.parse(atob(base64Payload));
-        // JWT token uses JwtRegisteredClaimNames.Sub which maps to "sub" claim
-        const userId = payload.sub || payload.nameid || payload.UserId || payload.userId;
-        return userId ? (typeof userId === 'string' ? parseInt(userId) : userId) : null;
-    } catch (e) {
-        console.error('Error parsing JWT:', e);
+        const stored =
+            JSON.parse(localStorage.getItem('Auth') || 'null') ||
+            JSON.parse(sessionStorage.getItem('Auth') || 'null') ||
+            {};
+        return stored.jwt || null;
+    } catch (error) {
+        console.warn('Unable to read stored auth token', error);
         return null;
     }
-}
+};
+
+const fallbackGetUserId = () => {
+    const token = fallbackGetAuthToken();
+    if (!token) return null;
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userId =
+            payload.sub || payload.nameid || payload.UserId || payload.userId;
+        return userId ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : null;
+    } catch (error) {
+        console.error('Error parsing JWT:', error);
+        return null;
+    }
+};
+
+const getAuthToken = () =>
+    (CartifyApi.getAuthToken && CartifyApi.getAuthToken()) || fallbackGetAuthToken();
+const getUserId = () =>
+    (CartifyApi.getUserId && CartifyApi.getUserId()) || fallbackGetUserId();
 
 // Get cart items from localStorage
 function getCartItems() {
@@ -56,34 +66,72 @@ if (paymentSelect) {
 
 
 
- fetch("https://countriesnow.space/api/v0.1/countries")
-    .then(res => res.json())
-    .then(data => {
-      const countrySelect = document.getElementById("country");
-      const citySelect = document.getElementById("city");
+const FALLBACK_COUNTRY_DATA = [
+    { country: "Egypt", cities: ["Cairo", "Alexandria", "Giza", "Port Said", "Mansoura", "Tanta", "Aswan"] },
+    { country: "Saudi Arabia", cities: ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Khobar"] },
+    { country: "United Arab Emirates", cities: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Al Ain"] },
+    { country: "United States", cities: ["New York", "Los Angeles", "Chicago", "Houston", "Philadelphia"] },
+    { country: "United Kingdom", cities: ["London", "Manchester", "Birmingham", "Liverpool", "Leeds"] },
+    { country: "Germany", cities: ["Berlin", "Munich", "Hamburg", "Cologne", "Frankfurt"] },
+    { country: "France", cities: ["Paris", "Lyon", "Marseille", "Nice", "Toulouse"] },
+    { country: "Canada", cities: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"] },
+    { country: "India", cities: ["New Delhi", "Mumbai", "Bengaluru", "Hyderabad", "Chennai"] },
+    { country: "Morocco", cities: ["Casablanca", "Rabat", "Fes", "Marrakesh", "Tangier"] }
+];
 
-     
-      data.data.forEach(countryObj => {
+const countrySelect = document.getElementById("country");
+const citySelect = document.getElementById("city");
+
+function renderCountries(data) {
+    if (!countrySelect) return;
+    countrySelect.innerHTML = '<option value="" hidden selected>Select Country</option>';
+    data.forEach(countryObj => {
         const opt = document.createElement("option");
         opt.value = countryObj.country;
         opt.textContent = countryObj.country;
         countrySelect.appendChild(opt);
-      });
-
-      
-      countrySelect.addEventListener("change", function(){
-        const selected = data.data.find(c => c.country === this.value);
-        citySelect.innerHTML = '<option hidden selected> Select City </option>';
-        if (selected && selected.cities) {
-          selected.cities.forEach(city => {
-            const opt = document.createElement("option");
-            opt.value = city;
-            opt.textContent = city;
-            citySelect.appendChild(opt);
-          });
-        }
-      });
     });
+}
+
+function renderCities(cities = []) {
+    if (!citySelect) return;
+    citySelect.innerHTML = '<option value="" hidden selected>Select City</option>';
+    if (!cities.length) {
+        citySelect.disabled = true;
+        return;
+    }
+    citySelect.disabled = false;
+    cities.forEach(city => {
+        const opt = document.createElement("option");
+        opt.value = city;
+        opt.textContent = city;
+        citySelect.appendChild(opt);
+    });
+}
+
+async function initCountryCitySelectors() {
+    if (!countrySelect || !citySelect) return;
+
+    let dataset = [];
+    try {
+        const response = await fetch("https://countriesnow.space/api/v0.1/countries");
+        if (!response.ok) throw new Error(`Countries API responded with ${response.status}`);
+        const data = await response.json();
+        dataset = Array.isArray(data?.data) && data.data.length ? data.data : FALLBACK_COUNTRY_DATA;
+    } catch (error) {
+        console.warn("Country API failed, using fallback list", error);
+        dataset = FALLBACK_COUNTRY_DATA;
+    }
+
+    renderCountries(dataset);
+
+    countrySelect.addEventListener("change", function () {
+        const selected = dataset.find(c => c.country === this.value);
+        renderCities(selected?.cities || []);
+    });
+}
+
+initCountryCitySelectors();
 const form = document.getElementById("myform");
 const successNotification = document.getElementById("successNotification");
 
@@ -213,18 +261,3 @@ function processCheckout() {
     });
 }
  
-    fetch("https://restcountries.com/v3.1/all")
-    .then(res => res.json())
-    .then(data => {
-      const select = document.getElementById("countryCode");
-
-      data.forEach(country => {
-        const opt = document.createElement("option");
-        const code = country.idd?.root
-          ? country.idd.root + (country.idd.suffixes ? country.idd.suffixes[0] : "")
-          : "";
-        opt.value = code;
-        opt.textContent = `${country.flag} ${country.name.common} (${code})`;
-        select.appendChild(opt);
-      });
-    });

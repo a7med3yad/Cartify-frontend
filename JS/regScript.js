@@ -18,9 +18,9 @@ $("#datepicker").datepicker({
     var iti = window.intlTelInput(input[0], {
         initialCountry: "auto",
         separateDialCode: true,
-        geoIpLookup: function (success, failure) {
-            $.get("https://ipapi.co/json/", function (data) {
-                success(data.country_code);
+        geoIpLookup: function (success) {
+            $.getJSON("https://ipapi.co/json/?callback=?", function (data) {
+                success(data?.country_code || "us");
             }).fail(function () {
                 success("us");
             });
@@ -131,19 +131,23 @@ $(".FORM").submit(function (e) {
             // لو التسجيل نجح
             window.location.href = "login.html"; 
         },
-error: function(xhr) {
-    let msg = xhr.responseText;
+error: function(xhr, status) {
+    const rawMsg = xhr?.responseText || xhr?.responseJSON?.message || xhr?.statusText || "";
+    const msg = typeof rawMsg === "string" ? rawMsg : String(rawMsg || "");
+    const normalized = msg.toLowerCase();
 
-    if (msg.includes("Email")) {
+    if (normalized.includes("email")) {
         $(".step").removeClass("active");
         $("#step1").addClass("active");
         $("#err").text(msg);
         $("#email").focus();
-    } else if (msg.includes("Username")) {
+    } else if (normalized.includes("username")) {
         $(".step").removeClass("active");
         $("#step1").addClass("active");
         $("#err").text(msg);
         $("#username").focus();
+    } else if (status === "error" && !msg) {
+        alert("❌ Could not reach the server. Please check your internet connection and try again.");
     } else {
         alert(msg || "❌ Registration failed. Try again.");
     }
