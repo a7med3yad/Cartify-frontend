@@ -92,7 +92,9 @@ async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_CONFIG.baseUrl}${path}`, config);
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || response.statusText);
+    const error = new Error(text || response.statusText);
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) return null;
@@ -371,8 +373,13 @@ async function loadProducts() {
     renderProducts(state.filteredProducts);
   } catch (error) {
     console.error(error);
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load products (${error.message}).</td></tr>`;
-    showToast("Failed to load products.", "error");
+    if (error.status === 401) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unauthorized. Please log in and ensure authToken is stored.</td></tr>`;
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load products (${error.message}).</td></tr>`;
+      showToast("Failed to load products.", "error");
+    }
   }
 }
 
@@ -485,7 +492,9 @@ async function loadProductDetails(productId) {
   tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Loading variants…</td></tr>`;
 
   try {
-    const response = await apiRequest(API_CONFIG.endpoints.productDetailsByProduct(productId));
+    const response = await apiRequest(
+      API_CONFIG.endpoints.productDetailsByProduct(productId),
+    );
     state.selectedProduct = response || state.selectedProduct;
     hydrateProductHeader(state.selectedProduct);
 
@@ -500,8 +509,13 @@ async function loadProductDetails(productId) {
     renderProductDetails(state.selectedProductDetails);
   } catch (error) {
     console.error(error);
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load variants (${error.message}).</td></tr>`;
-    showToast("Failed to load product variants.", "error");
+    if (error.status === 401) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unauthorized. Please log in again.</td></tr>`;
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load variants (${error.message}).</td></tr>`;
+      showToast("Failed to load product variants.", "error");
+    }
   }
 }
 
@@ -676,7 +690,11 @@ async function handleProductSubmit(event) {
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast(`Failed to save product (${error.message}).`, "error");
+    if (error.status === 401) {
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      showToast(`Failed to save product (${error.message}).`, "error");
+    }
   }
 }
 
@@ -790,7 +808,11 @@ async function editProductDetail(detailId) {
     openProductDetailModal(detail);
   } catch (error) {
     console.error(error);
-    showToast(`Unable to load variant (${error.message}).`, "error");
+    if (error.status === 401) {
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      showToast(`Unable to load variant (${error.message}).`, "error");
+    }
   }
 }
 
@@ -847,7 +869,11 @@ async function handleProductDetailSubmit(event) {
     loadProductDetails(productId);
   } catch (error) {
     console.error(error);
-    showToast(`Failed to save variant (${error.message}).`, "error");
+    if (error.status === 401) {
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      showToast(`Failed to save variant (${error.message}).`, "error");
+    }
   }
 }
 
@@ -900,12 +926,15 @@ async function loadInventory(detail) {
     renderInventory(data);
   } catch (error) {
     console.error(error);
-    if (error.message.includes("404")) {
+    if (error.status === 401) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unauthorized. Please log in again.</td></tr>`;
+      showToast("Unauthorized. Please log in again.", "error");
+    } else if (error.message.includes("404")) {
       renderInventory([]);
-      return;
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load inventory (${error.message}).</td></tr>`;
+      showToast("Failed to load inventory.", "error");
     }
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Unable to load inventory (${error.message}).</td></tr>`;
-    showToast("Failed to load inventory.", "error");
   }
 }
 
@@ -991,7 +1020,11 @@ async function handleInventorySubmit(event) {
     loadInventory(state.selectedDetail);
   } catch (error) {
     console.error(error);
-    showToast(`Unable to update stock (${error.message}).`, "error");
+    if (error.status === 401) {
+      showToast("Unauthorized. Please log in again.", "error");
+    } else {
+      showToast(`Unable to update stock (${error.message}).`, "error");
+    }
   }
 }
 
