@@ -736,8 +736,17 @@ async function handleProductSubmit(event) {
   const description = document
     .getElementById("productDescriptionInput")
     .value.trim();
-  const typeId = document.getElementById("productTypeSelect").value;
-  const storeId = document.getElementById("productStoreInput").value;
+  let typeId = document.getElementById("productTypeSelect").value;
+  const ctx = getMerchantContext();
+  // Prefer storeId from context to avoid sending an invalid value
+  let storeId =
+    ctx.storeId || document.getElementById("productStoreInput").value;
+  // If type not chosen but we loaded options, default to first to avoid empty TypeId
+  if (!typeId && state.subcategories.length) {
+    const firstId =
+      state.subcategories[0].subCategoryId || state.subcategories[0].id;
+    typeId = firstId ? String(firstId) : typeId;
+  }
   const imageFile = document.getElementById("productImageFileInput").files?.[0];
 
   const parsedTypeId = parseInt(typeId, 10);
@@ -815,6 +824,8 @@ async function handleProductSubmit(event) {
     } else {
       msg = `${msg} (HTTP ${error.status || "unknown"})`;
     }
+    msg +=
+      " Tip: Use storeId from your merchant token and a real subcategory TypeId (check /api/Category/subcategory).";
     showToast(msg, "error");
   }
 }
