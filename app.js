@@ -319,6 +319,11 @@ function hydrateContextLabels() {
   const { merchantId, storeId } = getMerchantContext();
   document.getElementById("merchantIdLabel").textContent = merchantId || "–";
   document.getElementById("storeIdLabel").textContent = storeId || "–";
+  // Prefill store input if present
+  const storeInput = document.getElementById("productStoreInput");
+  if (storeInput && storeId && !storeInput.value) {
+    storeInput.value = storeId;
+  }
 }
 
 async function ensureCatalogs() {
@@ -387,6 +392,12 @@ function populateTypeSelect() {
     .join("");
 
   select.innerHTML = `<option value="">Select type</option>${options}`;
+  // If nothing chosen, pick first real option to avoid empty TypeId
+  if (!select.value && state.subcategories.length) {
+    const firstId =
+      state.subcategories[0].subCategoryId || state.subcategories[0].id;
+    if (firstId) select.value = firstId;
+  }
 }
 
 async function loadProducts() {
