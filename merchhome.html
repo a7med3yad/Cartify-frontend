@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard | Cartify</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="Icons/favicon.ico" type="image/x-icon">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="CSS/merchhome.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="PageIcon">
+            <a href="index.html">
+                <img src="Icons/Untitled-1green.png" alt="Cartify Logo">
+            </a>
+        </div>
+
+        <div class="Login">
+            <div class="btn-group">
+                <div class="btn-img dropdown-toggle" style="background-image: url('https://i.pravatar.cc/150?img=12')"
+                    data-bs-toggle="dropdown" aria-expanded="false" role="button" id="userMenuBtn">
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end" id="drop">
+                    <li><span class="dropdown-item disabled"><strong id="merchantName">Merchant</strong></span></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user icon"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="#" id="logoutBtn"><i
+                                class="fas fa-sign-out-alt icon text-danger"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container-fluid">
+        <!-- Sidebar -->
+        <div class="sidebar-card">
+            <nav class="navbar navbar-expand-lg" id="sidebarNav">
+                <div class="collapse navbar-collapse" id="sidebarMenu">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title-wrapper">
+                            <i class="fas fa-store sidebar-icon"></i>
+                            <h3 class="sidebar-title">Merchant Panel</h3>
+                        </div>
+                    </div>
+
+                    <ul class="navbar-nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="dashboard">
+                                <div class="nav-indicator"></div>
+                                <div class="nav-link-content">
+                                    <i class="fas fa-gauge nav-icon"></i>
+                                    <span class="nav-text">Dashboard</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="products">
+                                <div class="nav-indicator"></div>
+                                <div class="nav-link-content">
+                                    <i class="fas fa-box nav-icon"></i>
+                                    <span class="nav-text">My Products</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="orders">
+                                <div class="nav-indicator"></div>
+                                <div class="nav-link-content">
+                                    <i class="fas fa-shopping-cart nav-icon"></i>
+                                    <span class="nav-text">Orders</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="inventory">
+                                <div class="nav-indicator"></div>
+                                <div class="nav-link-content">
+                                    <i class="fas fa-warehouse nav-icon"></i>
+                                    <span class="nav-text">Inventory</span>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-card">
+            <div class="content-wrapper">
+                <!-- Dashboard Section -->
+                <section id="dashboardSection" class="content-section active">
+                    <h2>Dashboard</h2>
+                    <p class="text-muted">Welcome to your merchant dashboard</p>
+
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
+                                    <h5>Total Revenue</h5>
+                                    <h3 id="totalRevenue">$0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                                    <h5>Total Orders</h5>
+                                    <h3 id="totalOrders">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-box fa-3x text-info mb-3"></i>
+                                    <h5>Total Products</h5>
+                                    <h3 id="totalProducts">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                                    <h5>Customers</h5>
+                                    <h3 id="totalCustomers">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Products Section -->
+                <section id="productsSection" class="content-section" style="display: none;">
+                    <h2>My Products</h2>
+                    <p class="text-muted">Manage your product catalog</p>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle"></i> Product management features coming soon!
+                    </div>
+                </section>
+
+                <!-- Orders Section -->
+                <section id="ordersSection" class="content-section" style="display: none;">
+                    <h2>Orders</h2>
+                    <p class="text-muted">View and manage your orders</p>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle"></i> Order management features coming soon!
+                    </div>
+                </section>
+
+                <!-- Inventory Section -->
+                <section id="inventorySection" class="content-section" style="display: none;">
+                    <h2>Inventory</h2>
+                    <p class="text-muted">Track your stock levels</p>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle"></i> Inventory management features coming soon!
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="JS/jquery.js"></script>
+    <!-- Custom JS -->
+    <script src="JS/merchhome.js"></script>
+</body>
+
+</html>
