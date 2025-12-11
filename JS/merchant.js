@@ -408,9 +408,16 @@ const MerchantApp = (() => {
 
   function bindNavigation() {
     $(".nav-link").off('click.merchant').on('click.merchant', function (e) {
-      e.preventDefault();
       const $link = $(this);
       const target = $link.data("target");
+      const href = $link.attr('href') || '';
+
+      // Allow normal navigation for real pages (e.g., products.html, product-details.html)
+      if ((!target || target === '') && href && href.endsWith('.html')) {
+        return; // let the browser navigate
+      }
+
+      e.preventDefault();
       setActiveNav($link);
       showSection(target);
     });
