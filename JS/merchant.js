@@ -7384,11 +7384,11 @@ const MerchantApp = (() => {
 (() => {
   const API_ROOT = 'https://cartify.runasp.net/api';
   const ENDPOINTS = {
-    products: `${API_ROOT}/Product`,
-    productDetails: `${API_ROOT}/ProductDetails`,
-    attributes: `${API_ROOT}/Attributes`,
-    measureUnits: `${API_ROOT}/MeasureUnits`,
-    subCategories: `${API_ROOT}/SubCategory`
+    products: `${API_ROOT}/merchant/products`,
+    productDetails: `${API_ROOT}/merchant/products/details`,
+    attributes: `${API_ROOT}/merchant/attributes-measures/attributes`,
+    measureUnits: `${API_ROOT}/merchant/attributes-measures/measures`,
+    subCategories: `${API_ROOT}/Category/subcategory`
   };
 
   const statusElId = 'apiStatus';
@@ -7429,7 +7429,7 @@ const MerchantApp = (() => {
       method: 'POST',
       body: JSON.stringify(productData)
     }),
-    getProductDetails: (productId) => fetchJson(`${ENDPOINTS.productDetails}/${productId}`),
+    getProductDetails: (productId) => fetchJson(`${API_ROOT}/merchant/products/${productId}/details`),
     addProductDetails: (detailsData) => fetchJson(ENDPOINTS.productDetails, {
       method: 'POST',
       body: JSON.stringify(detailsData)
