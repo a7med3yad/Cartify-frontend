@@ -32,46 +32,57 @@
             <h2 class="mb-0">Product Details</h2>
             <small class="text-muted">Attach attributes and measures to products</small>
           </div>
-          <a class="btn btn-outline-secondary" href="products.html">Back to Products</a>
+          <a class="btn btn-success" href="add-product-detail.html">Add Product Detail</a>
         </div>
 
         <div id="pageStatus" class="status-message status-info" role="alert" style="display:none;"></div>
 
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <input type="text" id="searchDetails" class="form-control" placeholder="Search by product">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Page</label>
+                <input type="number" id="pageNumber" class="form-control" value="1" min="1">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Page Size</label>
+                <select id="pageSize" class="form-select">
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-body">
-            <form id="productDetailForm" class="row g-3">
-              <div class="col-12">
-                <label class="form-label" for="productId">Product *</label>
-                <select class="form-select" id="productId" required>
-                  <option value="">Loading...</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="attributeIds">Attributes *</label>
-                <select multiple class="form-select" id="attributeIds" required size="6">
-                  <option value="">Loading...</option>
-                </select>
-                <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="measureIds">Measure Units *</label>
-                <select multiple class="form-select" id="measureIds" required size="6">
-                  <option value="">Loading...</option>
-                </select>
-                <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="detailPrice">Detail Price (optional)</label>
-                <input type="number" class="form-control" id="detailPrice" step="0.01" min="0">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="detailQuantity">Quantity (optional)</label>
-                <input type="number" class="form-control" id="detailQuantity" min="0">
-              </div>
-              <div class="col-12">
-                <button id="submitDetail" type="submit" class="btn btn-success w-100">Save Product Detail</button>
-              </div>
-            </form>
+            <div class="table-responsive">
+              <table class="table table-striped align-middle">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Product</th>
+                    <th>Attributes</th>
+                    <th>Measure Units</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="productDetailsTableBody">
+                  <tr><td colspan="7" class="text-center">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-end mt-2">
+              <small id="paginationInfo" class="text-muted"></small>
+            </div>
           </div>
         </div>
       </main>
@@ -80,7 +91,7 @@
 
   <script src="JS/jquery.js"></script>
   <script src="bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
-  <script src="JS/merchant-pages.js"></script>
+  <script src="JS/merchant-crud.js"></script>
 </body>
 </html>
 
