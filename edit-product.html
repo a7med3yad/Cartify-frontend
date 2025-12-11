@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartify | Edit Product</title>
+  <link rel="stylesheet" href="bootstrap-5.3.8-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="CSS/merchant.css">
+</head>
+<body data-page="edit-product">
+  <div class="container-fluid merchant-shell">
+    <div class="row flex-nowrap">
+      <aside class="col-12 col-md-3 col-lg-2 sidebar">
+        <div class="sidebar-header">
+          <h5>Cartify Admin</h5>
+        </div>
+        <nav class="nav flex-column">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="products.html">Products</a>
+          <a class="nav-link" href="product-details.html">Product Details</a>
+        </nav>
+      </aside>
+      <main class="col py-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h2 class="mb-0">Edit Product</h2>
+            <small class="text-muted">Update product info</small>
+          </div>
+          <a class="btn btn-outline-secondary" href="products.html">Back to Products</a>
+        </div>
+
+        <div id="pageStatus" class="status-message status-info" role="alert" style="display:none;"></div>
+
+        <div class="card">
+          <div class="card-body">
+            <form id="productForm" class="row g-3">
+              <input type="hidden" id="productId">
+              <div class="col-12">
+                <label class="form-label" for="productName">Product Name *</label>
+                <input type="text" class="form-control" id="productName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="price">Price *</label>
+                <input type="number" class="form-control" id="price" step="0.01" min="0" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="quantity">Quantity (optional)</label>
+                <input type="number" class="form-control" id="quantity" min="0">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="subCategory">Subcategory *</label>
+                <select class="form-select" id="subCategory" required>
+                  <option value="">Loading...</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="productType">Product Type (optional)</label>
+                <input type="text" class="form-control" id="productType" placeholder="Type name or ID">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="description">Description (optional)</label>
+                <textarea class="form-control" id="description" rows="3"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="image">Replace Image (optional)</label>
+                <input type="file" class="form-control" id="image" accept="image/*">
+              </div>
+              <div class="col-12">
+                <button id="submitProduct" type="submit" class="btn btn-primary w-100">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="JS/jquery.js"></script>
+  <script src="bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+  <script src="JS/merchant-crud.js"></script>
+</body>
+</html>
+

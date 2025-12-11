@@ -39,8 +39,8 @@ $(document).ready(function () {
         // الوصول للroles
         const roles = tokenData
           ? tokenData[
-          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-          ]
+              "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+            ]
           : [];
 
         // تحويل string لو فيه role واحد
