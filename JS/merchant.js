@@ -7368,3 +7368,275 @@ const MerchantApp = (() => {
     }
   }
 })();
+
+// ==================== LIGHTWEIGHT API WIRING FOR NEW FORMS ====================
+(() => {
+  const API_ROOT = 'https://cartify.runasp.net/api';
+  const ENDPOINTS = {
+    products: `${API_ROOT}/Product`,
+    productDetails: `${API_ROOT}/ProductDetails`,
+    attributes: `${API_ROOT}/Attributes`,
+    measureUnits: `${API_ROOT}/MeasureUnits`,
+    subCategories: `${API_ROOT}/SubCategory`
+  };
+
+  const statusElId = 'apiStatus';
+
+  const readAuthToken = () => {
+    try {
+      const auth = JSON.parse(localStorage.getItem('Auth') || sessionStorage.getItem('Auth') || '{}');
+      return auth.jwt || auth.token || null;
+    } catch (err) {
+      console.warn('Unable to read auth token', err);
+      return null;
+    }
+  };
+
+  const buildHeaders = (headers = {}) => {
+    const token = readAuthToken();
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...headers
+    };
+  };
+
+  const fetchJson = async (url, options = {}) => {
+    const response = await fetch(url, { ...options, headers: buildHeaders(options.headers || {}) });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Request failed (${response.status})`);
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  };
+
+  // ---- API surface required by the brief ----
+  const ApiService = {
+    getProducts: () => fetchJson(ENDPOINTS.products),
+    addProduct: (productData) => fetchJson(ENDPOINTS.products, {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    }),
+    getProductDetails: (productId) => fetchJson(`${ENDPOINTS.productDetails}/${productId}`),
+    addProductDetails: (detailsData) => fetchJson(ENDPOINTS.productDetails, {
+      method: 'POST',
+      body: JSON.stringify(detailsData)
+    }),
+    getAttributes: () => fetchJson(ENDPOINTS.attributes),
+    getMeasureUnits: () => fetchJson(ENDPOINTS.measureUnits),
+    getSubCategories: () => fetchJson(ENDPOINTS.subCategories)
+  };
+
+  const setStatus = (message, type = 'info') => {
+    const el = document.getElementById(statusElId);
+    if (!el) return;
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+  };
+
+  const safeNumber = (value) => {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const toOptions = (select, items, valueKey, labelKey) => {
+    if (!select) return;
+    select.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select an option';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    frag.appendChild(placeholder);
+    (items || []).forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item[valueKey];
+      opt.textContent = item[labelKey];
+      frag.appendChild(opt);
+    });
+    select.appendChild(frag);
+  };
+
+  const toMultiOptions = (select, items, valueKey, labelKey) => {
+    if (!select) return;
+    select.innerHTML = '';
+    (items || []).forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item[valueKey];
+      opt.textContent = item[labelKey];
+      select.appendChild(opt);
+    });
+  };
+
+  const renderProductsList = (products = []) => {
+    const list = document.getElementById('productList');
+    const select = document.getElementById('detailProductId');
+    if (!list || !select) return;
+
+    list.innerHTML = '';
+    select.innerHTML = '<option value="">Select a product</option>';
+
+    if (!products.length) {
+      list.innerHTML = '<li class="list-group-item">No products found.</li>';
+      return;
+    }
+
+    const fragList = document.createDocumentFragment();
+    const fragSelect = document.createDocumentFragment();
+
+    products.forEach((p) => {
+      const id = p.productId || p.id || p.productID || p.productid;
+      const name = p.productName || p.name || p.title || `Product ${id ?? ''}`;
+      const price = p.price ?? p.productPrice ?? null;
+
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = `${name}`;
+      if (price !== null) {
+        const priceEl = document.createElement('small');
+        priceEl.textContent = `Price: ${price}`;
+        li.appendChild(priceEl);
+      }
+      fragList.appendChild(li);
+
+      if (id !== undefined && id !== null && id !== '') {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = name;
+        fragSelect.appendChild(opt);
+      }
+    });
+
+    list.appendChild(fragList);
+    select.appendChild(fragSelect);
+  };
+
+  const loadFormData = async () => {
+    try {
+      setStatus('Loading reference data...', 'info');
+      const [subCategories, attributes, measureUnits, products] = await Promise.all([
+        ApiService.getSubCategories(),
+        ApiService.getAttributes(),
+        ApiService.getMeasureUnits(),
+        ApiService.getProducts()
+      ]);
+
+      toOptions(
+        document.getElementById('productSubcategory'),
+        subCategories || [],
+        'subCategoryId',
+        'subCategoryName'
+      );
+
+      toMultiOptions(
+        document.getElementById('detailAttributes'),
+        attributes || [],
+        'attributeId',
+        'attributeName'
+      );
+
+      toMultiOptions(
+        document.getElementById('detailMeasureUnits'),
+        measureUnits || [],
+        'measureUnitId',
+        'measureUnitName'
+      );
+
+      renderProductsList(products || []);
+      setStatus('Reference data loaded. Ready to add products.', 'success');
+    } catch (error) {
+      console.error('Error loading form data:', error);
+      setStatus(error.message || 'Unable to load form data', 'error');
+    }
+  };
+
+  const getSelectedValues = (select) => {
+    if (!select) return [];
+    return Array.from(select.selectedOptions)
+      .map((opt) => opt.value)
+      .filter(Boolean)
+      .map((v) => (isNaN(v) ? v : Number(v)));
+  };
+
+  const handleProductSubmit = async (event) => {
+    event.preventDefault();
+    const name = document.getElementById('productName')?.value?.trim();
+    const price = safeNumber(document.getElementById('productPrice')?.value);
+    const subCategoryId = document.getElementById('productSubcategory')?.value;
+
+    if (!name || price === null || !subCategoryId) {
+      setStatus('Name, price, and subcategory are required.', 'error');
+      return;
+    }
+
+    const payload = {
+      productName: name,
+      price,
+      subCategoryId: isNaN(subCategoryId) ? subCategoryId : Number(subCategoryId)
+    };
+
+    try {
+      setStatus('Adding product...', 'info');
+      await ApiService.addProduct(payload);
+      setStatus('Product added successfully.', 'success');
+      (event.target)?.reset();
+      await loadFormData();
+    } catch (error) {
+      console.error('Add product error:', error);
+      setStatus(error.message || 'Failed to add product', 'error');
+    }
+  };
+
+  const handleProductDetailsSubmit = async (event) => {
+    event.preventDefault();
+    const productId = document.getElementById('detailProductId')?.value;
+    const attributeIds = getSelectedValues(document.getElementById('detailAttributes'));
+    const measureUnitIds = getSelectedValues(document.getElementById('detailMeasureUnits'));
+    const detailPrice = safeNumber(document.getElementById('detailPrice')?.value);
+    const detailQuantity = safeNumber(document.getElementById('detailQuantity')?.value);
+
+    if (!productId) {
+      setStatus('Please select a product before adding details.', 'error');
+      return;
+    }
+
+    if (!attributeIds.length || !measureUnitIds.length) {
+      setStatus('Choose at least one attribute and one measure unit.', 'error');
+      return;
+    }
+
+    const payload = {
+      productId: isNaN(productId) ? productId : Number(productId),
+      attributeIds,
+      measureUnitIds
+    };
+
+    if (detailPrice !== null) payload.price = detailPrice;
+    if (detailQuantity !== null) payload.quantity = detailQuantity;
+
+    try {
+      setStatus('Adding product details...', 'info');
+      await ApiService.addProductDetails(payload);
+      setStatus('Product details added successfully.', 'success');
+      (event.target)?.reset();
+      await loadFormData();
+    } catch (error) {
+      console.error('Add product details error:', error);
+      setStatus(error.message || 'Failed to add product details', 'error');
+    }
+  };
+
+  const bindFormEvents = () => {
+    const productForm = document.getElementById('productForm');
+    const detailsForm = document.getElementById('productDetailsForm');
+    if (!productForm || !detailsForm) return;
+
+    productForm.addEventListener('submit', handleProductSubmit);
+    detailsForm.addEventListener('submit', handleProductDetailsSubmit);
+    loadFormData();
+  };
+
+  document.addEventListener('DOMContentLoaded', bindFormEvents);
+})();
