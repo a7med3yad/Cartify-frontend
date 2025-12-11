@@ -6888,23 +6888,14 @@ const MerchantApp = (() => {
 
     console.log('Saving product with:', { productName, typeId, storeId, productDescription });
 
-    const formData = new FormData();
-    formData.append('ProductName', productName);
-    formData.append('ProductDescription', productDescription || '');
-    formData.append('TypeId', typeId); // legacy key
-    formData.append('SubCategoryId', typeId); // explicit key for API expectations
-    formData.append('Price', productPrice);
-    if (!isNaN(productQuantity)) {
-      formData.append('Quantity', productQuantity);
-    }
-    formData.append('StoreId', storeId);
-
-    const imageFiles = $modal.find('#productImages')[0].files;
-    if (imageFiles.length > 0 && !productId) {
-      for (let i = 0; i < imageFiles.length; i++) {
-        formData.append('Images', imageFiles[i]);
-      }
-    }
+    const payload = {
+      productName,
+      productDescription: productDescription || '',
+      price: productPrice,
+      quantity: !isNaN(productQuantity) ? productQuantity : undefined,
+      subCategoryId: isNaN(typeId) ? typeId : Number(typeId),
+      storeId: storeId
+    };
 
     const method = productId ? 'PUT' : 'POST';
     const url = productId ? API_ENDPOINTS.products.update(productId) : API_ENDPOINTS.products.create();
@@ -6912,18 +6903,15 @@ const MerchantApp = (() => {
     $.ajax({
       url: url,
       method: method,
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` },
-      processData: false,
-      contentType: false,
-      data: formData,
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify(payload),
       success: function (response) {
         showNotification(`Product ${productId ? 'updated' : 'created'} successfully!`, 'success');
         bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
         fetchProducts();
-
-        if (!productId && imageFiles.length > 0 && response.productId) {
-          uploadProductImages(response.productId, imageFiles);
-        }
       },
       error: function (xhr) {
         console.error('Error saving product:', xhr);
