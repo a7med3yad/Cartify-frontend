@@ -6788,10 +6788,18 @@ const MerchantApp = (() => {
                   <label class="form-label">Product Name <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="productName" required>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="productDescription" rows="3"></textarea>
-                </div>
+        <div class="mb-3">
+          <label class="form-label">Price <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" id="productPrice" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Quantity</label>
+          <input type="number" class="form-control" id="productQuantity" min="0" step="1" placeholder="0">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="productDescription" rows="3"></textarea>
+        </div>
                 <div class="mb-3">
                   <label class="form-label">Subcategory/Type <span class="text-danger">*</span></label>
                   <select class="form-select" id="productType" required>
@@ -6835,6 +6843,8 @@ const MerchantApp = (() => {
           // CRITICAL FIX: Use scoped selectors to avoid duplicate IDs
           const $modal = $('#productModal');
           $modal.find('#productName').val(product.productName || product.name);
+          $modal.find('#productPrice').val(product.price ?? product.productPrice ?? '');
+          $modal.find('#productQuantity').val(product.quantity ?? product.stockQuantity ?? '');
           $modal.find('#productDescription').val(product.productDescription || product.description);
           $modal.find('#productType').val(product.typeId || product.type?.id);
         },
@@ -6851,6 +6861,8 @@ const MerchantApp = (() => {
     const $modal = $('#productModal');
     const productId = $modal.find('#productId').val();
     const productName = $modal.find('#productName').val();
+    const productPrice = parseFloat($modal.find('#productPrice').val());
+    const productQuantity = parseInt($modal.find('#productQuantity').val(), 10);
     const productDescription = $modal.find('#productDescription').val();
     const typeId = $modal.find('#productType').val();
     const storeId = getStoreId();
@@ -6859,6 +6871,12 @@ const MerchantApp = (() => {
     if (!productName || productName.trim() === '') {
       showNotification('Product name is required', 'error');
       $modal.find('#productName').focus();
+      return;
+    }
+
+    if (isNaN(productPrice)) {
+      showNotification('Price is required', 'error');
+      $modal.find('#productPrice').focus();
       return;
     }
 
@@ -6873,7 +6891,12 @@ const MerchantApp = (() => {
     const formData = new FormData();
     formData.append('ProductName', productName);
     formData.append('ProductDescription', productDescription || '');
-    formData.append('TypeId', typeId);
+    formData.append('TypeId', typeId); // legacy key
+    formData.append('SubCategoryId', typeId); // explicit key for API expectations
+    formData.append('Price', productPrice);
+    if (!isNaN(productQuantity)) {
+      formData.append('Quantity', productQuantity);
+    }
     formData.append('StoreId', storeId);
 
     const imageFiles = $modal.find('#productImages')[0].files;
